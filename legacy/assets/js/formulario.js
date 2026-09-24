@@ -20,12 +20,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // A. Obtención de UF
     async function fetchUFValue() {
         try {
-            const response = await fetch('https://mindicador.cl/api/uf');
+            const response = await fetch('https://findic.cl/api/uf');
             const data = await response.json();
             return data.serie[0].valor;
         } catch (error) {
             console.error('Error API UF, usando valor respaldo:', error);
-            return 38000; 
+            return 41000; 
         }
     }
 

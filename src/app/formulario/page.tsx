@@ -3,11 +3,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 
 export default function FormularioPage() {
   // Estado para guardar el valor de la UF
-  const [ufValue, setUfValue] = useState<number>(38000);
+  const [ufValue, setUfValue] = useState<number>(DEFAULT_UF_VALUE);
 
   // Estado del formulario (Datos del Lead)
   const [formData, setFormData] = useState({

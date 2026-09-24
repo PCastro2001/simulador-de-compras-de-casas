@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks";
 import { REGION_MAP } from "@/data/regions";
 
@@ -72,7 +72,7 @@ export default function AsistenteSubsidiosPage() {
   const [step, setStep] = useState<number>(1);
   
   // Datos de la UF y banco
-  const [ufValue, setUfValue] = useState<number>(39200);
+  const [ufValue, setUfValue] = useState<number>(DEFAULT_UF_VALUE);
   
   // --- Estados de Perfil A (Descubrimiento) ---
   const [familyType, setFamilyType] = useState<"familia" | "solo" | "">("");

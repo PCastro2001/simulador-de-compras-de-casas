@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks"; // Conectado al motor central de tasas
 
 export default function DS1Tramo3Page() {
@@ -16,7 +16,7 @@ export default function DS1Tramo3Page() {
   const [location, setLocation] = useState("none");
   const [loanTerm, setLoanTerm] = useState("25");
   const [isYoungSingle, setIsYoungSingle] = useState(false);
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   // Límite dinámico: Sube a 3000 UF si aplica DS15 con vivienda nueva, si no, respeta topes zonales

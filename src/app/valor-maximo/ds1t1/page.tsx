@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks";
 
 export default function MaxValueDS1T1Page() {
@@ -14,7 +14,7 @@ export default function MaxValueDS1T1Page() {
   const [loanTerm, setLoanTerm] = useState("15");
   const [isNewHome, setIsNewHome] = useState(false);
   const [isYoungSingle, setIsYoungSingle] = useState(false);
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   useEffect(() => {

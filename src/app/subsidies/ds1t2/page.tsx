@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks"; // Motor central de tasas
 
 export default function DS1Tramo2Page() {
@@ -16,7 +16,7 @@ export default function DS1Tramo2Page() {
   const [location, setLocation] = useState("none");
   const [loanTerm, setLoanTerm] = useState("25");
   const [isYoungSingle, setIsYoungSingle] = useState(false);
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   // Límite dinámico: Sube a 3000 UF si es casa nueva y el ahorro es >= 80

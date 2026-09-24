@@ -3,14 +3,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 
 export default function DS49Page() {
   const [propertyCLP, setPropertyCLP] = useState("");
   const [propertyUF, setPropertyUF] = useState("");
   const [savings, setSavings] = useState("10"); 
   const [isUrban, setIsUrban] = useState(true); 
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   const MAX_LIMIT_UF = 1300;

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 
 const formatCLP = (value: number) => {
   return new Intl.NumberFormat("es-CL", {
@@ -23,7 +23,7 @@ const MIN_INCOME_UF = 7;
 const MAX_INCOME_UF = 25;
 
 export default function SubsidioArriendoDS52Page() {
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [incomeCLP, setIncomeCLP] = useState<number | null>(null);
   const [loadingIncome, setLoadingIncome] = useState(true);
 

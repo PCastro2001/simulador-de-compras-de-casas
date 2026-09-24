@@ -17,14 +17,14 @@ const MAX_INCOME_UF = 25;
 // 1. Obtener UF
 async function fetchUFValue() {
     try {
-        const response = await fetch('https://mindicador.cl/api/uf');
+        const response = await fetch('https://findic.cl/api/uf');
         const data = await response.json();
         const ufValue = data.serie[0].valor;
         document.getElementById('uf-value').value = ufValue.toFixed(2);
         return ufValue;
     } catch (error) {
         console.error('Error UF:', error);
-        return 38000; // Fallback
+        return 41000; // Fallback
     }
 }
 

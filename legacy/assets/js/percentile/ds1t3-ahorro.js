@@ -22,13 +22,13 @@ const AHORRO_MINIMO_T3 = 80; // UF
 
 async function fetchUFValue() {
     try {
-        const response = await fetch('https://mindicador.cl/api/uf');
+        const response = await fetch('https://findic.cl/api/uf');
         const data = await response.json();
         const ufValue = data.serie[0].valor;
         document.getElementById('uf-value').value = ufValue;
         return ufValue;
     } catch (error) {
-        return 38000;
+        return 41000;
     }
 }
 

@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks";
 
 export default function DS19Page() {
@@ -13,7 +13,7 @@ export default function DS19Page() {
   const [bank, setBank] = useState("");
   const [loanTerm, setLoanTerm] = useState("25");
   const [isYoungSingle, setIsYoungSingle] = useState(false);
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   // Estados de la Nueva Matriz Normativa

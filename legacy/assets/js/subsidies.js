@@ -10,9 +10,9 @@ document.getElementById('subsidy-form').addEventListener('submit', (event) => {
     const householdSize = parseInt(document.getElementById('household-size').value);
     
     // Obtenemos el valor de la UF desde el input (donde lo guardó la función fetch)
-    // Si por alguna razón falló la API, usamos un valor por defecto seguro (ej: 38000)
+    // Si por alguna razón falló la API, usamos un valor por defecto seguro (ej: 41000)
     let ufValue = parseFloat(document.getElementById('uf-value').value);
-    if (!ufValue || isNaN(ufValue)) ufValue = 38000;
+    if (!ufValue || isNaN(ufValue)) ufValue = 41000;
 
     if (isNaN(income) || isNaN(householdSize)) {
         alert("Por favor, ingresa valores numéricos válidos.");
@@ -38,7 +38,7 @@ document.getElementById('subsidy-form').addEventListener('submit', (event) => {
 // Tu función para obtener la UF (sin cambios, solo integrada)
 async function fetchUFValue() {
     try {
-        const response = await fetch('https://mindicador.cl/api/uf');
+        const response = await fetch('https://findic.cl/api/uf');
         const data = await response.json();
         const ufValue = data.serie[0].valor;
         // Asegúrate de tener un <input type="hidden" id="uf-value"> en tu HTML
@@ -52,8 +52,8 @@ async function fetchUFValue() {
         console.error('Error al obtener el valor de la UF:', error);
         // Seteamos un fallback en el input si falla
         const ufInput = document.getElementById('uf-value');
-        if(ufInput) ufInput.value = 38000; 
-        return 38000; 
+        if(ufInput) ufInput.value = 41000; 
+        return 41000; 
     }
 }
 

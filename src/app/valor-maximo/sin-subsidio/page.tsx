@@ -3,10 +3,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks";
 
-export default function MaxValueSinSubsidioPage() {
+export default function ValorMaximoSinSubsidioPage() {
   const [incomeCLP, setIncomeCLP] = useState("");
   const [hasSavings, setHasSavings] = useState<"yes" | "no">("yes");
   const [savingsCLP, setSavingsCLP] = useState("");
@@ -19,7 +19,7 @@ export default function MaxValueSinSubsidioPage() {
   const [applyFogaes, setApplyFogaes] = useState(false);
   const [isYoungSingle, setIsYoungSingle] = useState(false);
   
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   useEffect(() => {

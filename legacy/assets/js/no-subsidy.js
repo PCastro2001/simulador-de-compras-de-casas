@@ -14,14 +14,14 @@ const BANKS = {
 // Función para obtener el valor de la UF desde la API
 async function fetchUFValue() {
     try {
-        const response = await fetch('https://mindicador.cl/api/uf');
+        const response = await fetch('https://findic.cl/api/uf');
         const data = await response.json();
         const ufValue = data.serie[0].valor;
         document.getElementById('uf-value').value = ufValue.toFixed(2);
         return ufValue;
     } catch (error) {
         console.error('Error al obtener el valor de la UF:', error);
-        return 37396.77; // Valor por defecto
+        return 41000; // Valor por defecto
     }
 }
 

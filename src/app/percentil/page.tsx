@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { REGION_MAP } from "@/data/regions";
 
 export default function PercentilPage() {
@@ -11,7 +11,7 @@ export default function PercentilPage() {
   const [income, setIncome] = useState<string>("");
   const [householdSize, setHouseholdSize] = useState<string>("");
   const [region, setRegion] = useState<string>("metropolitana");
-  const [ufValue, setUfValue] = useState<number>(38000);
+  const [ufValue, setUfValue] = useState<number>(DEFAULT_UF_VALUE);
   
   // Estados para los resultados
   const [result, setResult] = useState<{

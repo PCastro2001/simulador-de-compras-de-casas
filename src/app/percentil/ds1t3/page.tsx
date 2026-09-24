@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 
 const formatCLP = (value: number) => {
   return new Intl.NumberFormat("es-CL", {
@@ -36,7 +36,7 @@ const PUNTAJES_CORTE_T3: Record<string, number> = {
 const AHORRO_MINIMO_T3 = 80; // UF
 
 export default function AhorroSeguroDS1T3Page() {
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   // Estados del Formulario

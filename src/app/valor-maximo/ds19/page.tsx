@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchUFValue } from "@/utils/api";
+import { fetchUFValue, DEFAULT_UF_VALUE } from "@/utils/api";
 import { BANKS } from "@/data/banks";
 import { REGION_MAP } from "@/data/regions";
 
@@ -18,7 +18,7 @@ export default function MaxValueDS19Page() {
   const [loanTerm, setLoanTerm] = useState("25");
   const [isDS15, setIsDS15] = useState(true);
   const [isYoungSingle, setIsYoungSingle] = useState(false);
-  const [ufValue, setUfValue] = useState(39200);
+  const [ufValue, setUfValue] = useState(DEFAULT_UF_VALUE);
   const [results, setResults] = useState<any>(null);
 
   const [region, setRegion] = useState("metropolitana");
