@@ -1,7 +1,7 @@
 // src/app/page.tsx
 import Link from "next/link";
 
-export default function SubsidiesMenuPage() {
+export default function HomePage() {
   const herramientas = [
     {
       href: "/percentil",
@@ -42,11 +42,9 @@ export default function SubsidiesMenuPage() {
   ];
 
   return (
-    // Fondo base del sitio en un gris/azul claro limpio que hace resaltar las tarjetas blancas
     <div className="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
-      
       <div>
-        {/* Encabezado con tu degradado identitario original, pero en un bloque limpio y nítido */}
+        {/* Encabezado */}
         <header className="bg-gradient-to-r from-[#6b9ac4] to-[#87c0a3] text-white px-6 py-14 border-b-4 border-white shadow-sm">
           <div className="max-w-5xl mx-auto">
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight drop-shadow-sm">
@@ -58,7 +56,7 @@ export default function SubsidiesMenuPage() {
           </div>
         </header>
 
-        {/* Contenedor del contenido con padding adaptado */}
+        {/* Contenedor del contenido */}
         <main className="max-w-5xl mx-auto px-6 py-10">
           
           {/* Bloque 0: Selección de Perfil (Onboarding) */}
@@ -73,14 +71,14 @@ export default function SubsidiesMenuPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tarjeta: Conoce el Mejor Subsidio para ti */}
+              {/* Tarjeta 1: Conoce el mejor subsidio para ti */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:border-[#6b9ac4] hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between group">
                 <div>
                   <div className="w-12 h-12 bg-blue-50 text-[#6b9ac4] rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-[#6b9ac4] group-hover:text-white transition-colors duration-300">
                     ✨
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">
-                    Conoce el Mejor Subsidio para ti
+                    Conoce el mejor subsidio para ti
                   </h3>
                   <p className="text-xs md:text-sm text-slate-500 leading-relaxed mb-6">
                     Evaluamos tu grupo familiar con la escala oficial de adultos equivalentes del RSH y calculamos exactamente tu ahorro mínimo para ganar entre DS49, DS1 T1, T2 y T3.
@@ -121,14 +119,14 @@ export default function SubsidiesMenuPage() {
                 </div>
                 
                 <Link 
-                  href="/asistente-subsidios?tab=wizard" 
+                  href="/asistente-subsidios" 
                   className="w-full text-center py-3.5 px-4 bg-[#6b9ac4] text-white hover:bg-[#5a86ae] font-bold text-sm rounded-xl transition-all shadow-sm"
                 >
-                  Conocer el Mejor Subsidio para Mí →
+                  Conoce el mejor subsidio para ti →
                 </Link>
               </div>
 
-              {/* Tarjeta: Calcula el Valor Máximo de Casa */}
+              {/* Tarjeta 2: Calcula el Valor Máximo de Casa */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:border-[#87c0a3] hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between group">
                 <div>
                   <div className="w-12 h-12 bg-emerald-50 text-[#87c0a3] rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-[#87c0a3] group-hover:text-slate-950 transition-colors duration-300">
@@ -177,16 +175,16 @@ export default function SubsidiesMenuPage() {
                 </div>
 
                 <Link 
-                  href="/asistente-subsidios?tab=valor-maximo" 
+                  href="/valor-maximo" 
                   className="w-full text-center py-3.5 px-4 bg-[#87c0a3] text-slate-950 hover:bg-[#76b092] font-bold text-sm rounded-xl transition-all shadow-sm"
                 >
-                  Calcular Valor Máximo de Casa →
+                  Calcula el Valor Máximo de Casa →
                 </Link>
               </div>
             </div>
           </section>
 
-          {/* Bloque 1: El gancho comercial (Tu formulario de Leads) */}
+          {/* Bloque 1: Evaluación de Perfil Comercial */}
           <section className="mb-10">
             <div className="bg-gradient-to-br from-slate-900 to-indigo-950 text-white rounded-2xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-md border border-slate-800">
               <div className="max-w-2xl">
@@ -209,7 +207,7 @@ export default function SubsidiesMenuPage() {
             </div>
           </section>
 
-          {/* Bloque 2: Indicador de sección para organizar el flujo */}
+          {/* Bloque 2: Indicador de sección */}
           <div className="flex items-center gap-4 mb-6">
             <h3 className="text-xs font-bold tracking-widest text-slate-500 uppercase whitespace-nowrap">
               Módulos de Simulación Individual
@@ -217,7 +215,7 @@ export default function SubsidiesMenuPage() {
             <div className="h-px bg-slate-300 w-full"></div>
           </div>
 
-          {/* Bloque 3: Grilla de calculadoras con contraste limpio */}
+          {/* Bloque 3: Grilla de calculadoras */}
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {herramientas.map((opcion, index) => (
               <article 
@@ -226,7 +224,6 @@ export default function SubsidiesMenuPage() {
               >
                 <Link href={opcion.href} className="block h-full flex flex-col justify-between">
                   <div>
-                    {/* El color de la categoría le da ritmo visual a la tarjeta */}
                     <span className="text-[11px] font-bold tracking-wider uppercase text-[#6b9ac4] block mb-2 group-hover:text-[#87c0a3] transition-colors duration-200">
                       {opcion.categoria}
                     </span>
@@ -238,7 +235,6 @@ export default function SubsidiesMenuPage() {
                     </p>
                   </div>
                   
-                  {/* Link inferior que reacciona de forma interactiva */}
                   <div className="text-blue-600 text-xs font-semibold flex items-center gap-1 mt-6 pt-3 border-t border-slate-100 group-hover:text-slate-900 transition-colors duration-200">
                     Ingresar al simulador →
                   </div>
@@ -249,7 +245,6 @@ export default function SubsidiesMenuPage() {
 
         </main>
       </div>
-
     </div>
   );
 }
