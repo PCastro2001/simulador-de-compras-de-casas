@@ -101,7 +101,11 @@ export function calculateEquivalenceScale(input: RSHCalculationInput): {
     input.postulanteEsAdultoMayor || (input.adultosMayores60 && input.adultosMayores60 > 0)
   );
 
-  const esHogarUnipersonal = adultos === 1 && menores === 0;
+  const totalIntegrantes = typeof input.totalIntegrantes === 'number'
+    ? input.totalIntegrantes
+    : (adultos + menores);
+
+  const esHogarUnipersonal = totalIntegrantes === 1 && adultos === 1 && menores === 0;
 
   if (esHogarUnipersonal) {
     const base = 1.0;

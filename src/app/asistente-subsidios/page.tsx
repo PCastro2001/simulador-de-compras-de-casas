@@ -1000,9 +1000,6 @@ export default function AsistenteSubsidiosPage() {
               >
                 <span>✨</span>
                 <span>Conoce el mejor subsidio para ti</span>
-                <span className="bg-teal-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-md">
-                  v1.4.1
-                </span>
               </button>
 
               <button

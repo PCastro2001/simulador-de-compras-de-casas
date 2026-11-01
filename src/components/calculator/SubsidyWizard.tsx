@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDS49Calculator } from '@/hooks/useDS49Calculator';
 import { SubsidyComparisonMatrix } from './SubsidyComparisonMatrix';
 import { ScoreBreakdownModal } from './ScoreBreakdownModal';
@@ -37,6 +37,8 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
   } = useDS49Calculator();
 
   // Estados para sincronización bidireccional de Ahorro Actual (CLP y UF)
+  const isUserTypingSavingsRef = useRef<'clp' | 'uf' | null>(null);
+
   const [savingsCLPInput, setSavingsCLPInput] = useState<string>(() =>
     state.ahorroActualUF && ufValue > 0
       ? Math.round(state.ahorroActualUF * ufValue).toLocaleString('es-CL')
@@ -48,23 +50,18 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
 
   // Sincronizar inputs si cambia externamente el valor de UF o se reinicia el estado
   useEffect(() => {
+    if (isUserTypingSavingsRef.current) {
+      return;
+    }
     if (ufValue > 0) {
       const calculatedClp = Math.round(state.ahorroActualUF * ufValue);
-      const clpStr = calculatedClp > 0 ? calculatedClp.toLocaleString('es-CL') : '';
-      const ufStr = state.ahorroActualUF > 0 ? state.ahorroActualUF.toString() : '';
-
-      const currentClpNum = parseInt(savingsCLPInput.replace(/\D/g, ''), 10) || 0;
-      if (Math.abs(currentClpNum - calculatedClp) > 100) {
-        setSavingsCLPInput(clpStr);
-      }
-      const currentUfNum = parseFloat(savingsUFInput) || 0;
-      if (Math.abs(currentUfNum - state.ahorroActualUF) > 0.05) {
-        setSavingsUFInput(ufStr);
-      }
+      setSavingsCLPInput(calculatedClp > 0 ? calculatedClp.toLocaleString('es-CL') : '');
+      setSavingsUFInput(state.ahorroActualUF > 0 ? state.ahorroActualUF.toString() : '');
     }
   }, [state.ahorroActualUF, ufValue]);
 
   const handleSavingsCLPChange = (val: string) => {
+    isUserTypingSavingsRef.current = 'clp';
     const raw = val.replace(/\D/g, '');
     if (!raw) {
       setSavingsCLPInput('');
@@ -76,12 +73,13 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
     setSavingsCLPInput(clp.toLocaleString('es-CL'));
     if (ufValue > 0) {
       const uf = Number((clp / ufValue).toFixed(2));
-      setSavingsUFInput(uf.toString());
+      setSavingsUFInput(uf > 0 ? uf.toString() : '0');
       updateField('ahorroActualUF', uf);
     }
   };
 
   const handleSavingsUFChange = (val: string) => {
+    isUserTypingSavingsRef.current = 'uf';
     setSavingsUFInput(val);
     const uf = parseFloat(val);
     if (!isNaN(uf) && uf >= 0) {
@@ -108,9 +106,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
 
   const personasHogar = Math.max(
     1,
-    state.cantidadPersonasHogar || (state.adultosTotales + state.menoresDe18) || 1
+    state.cantidadPersonasHogar ||
+      (state.adultosTotales + state.menoresDe18 + state.miembrosDiscapacidad) ||
+      1
   );
-  const isSingleApplicant = state.adultosTotales === 1 && state.menoresDe18 === 0;
+  const isSingleApplicant = personasHogar === 1;
   const ingresoPerCapita = Math.round(state.ingresoFamiliarCLP / personasHogar);
 
   return (
@@ -259,7 +259,9 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       >
                         {isSingleApplicant
                           ? '👤 Hogar Unipersonal (1 postulante)'
-                          : `👥 Núcleo de ${personasHogar} integrantes (${state.adultosTotales} adultos, ${state.menoresDe18} menores)`}
+                          : `👥 Núcleo de ${personasHogar} integrantes (${state.adultosTotales} adultos${
+                              state.menoresDe18 > 0 ? `, ${state.menoresDe18} menores` : ''
+                            }${state.miembrosDiscapacidad > 0 ? `, ${state.miembrosDiscapacidad} con discapacidad` : ''})`}
                       </span>
                     </div>
                   </div>
@@ -715,6 +717,9 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                           inputMode="numeric"
                           value={savingsCLPInput}
                           onChange={(e) => handleSavingsCLPChange(e.target.value)}
+                          onBlur={() => {
+                            isUserTypingSavingsRef.current = null;
+                          }}
                           placeholder="Ej: 394.000"
                           className="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-4 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         />
@@ -736,6 +741,9 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                           step="0.1"
                           value={savingsUFInput}
                           onChange={(e) => handleSavingsUFChange(e.target.value)}
+                          onBlur={() => {
+                            isUserTypingSavingsRef.current = null;
+                          }}
                           placeholder="Ej: 10"
                           className="w-full bg-white border border-slate-300 rounded-xl pl-4 pr-10 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                         />

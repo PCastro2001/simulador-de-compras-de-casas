@@ -186,18 +186,22 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
         // Sincronización demográfica
         if (key === 'adultosTotales') {
           next.adultosTotales = Math.max(1, Number(value));
-          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18;
+          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18 + next.miembrosDiscapacidad;
         } else if (key === 'menoresDe18') {
           next.menoresDe18 = Math.max(0, Number(value));
-          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18;
+          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18 + next.miembrosDiscapacidad;
+        } else if (key === 'miembrosDiscapacidad') {
+          next.miembrosDiscapacidad = Math.max(0, Number(value));
+          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18 + next.miembrosDiscapacidad;
         } else if (key === 'cantidadPersonasHogar') {
           const total = Math.max(1, Number(value));
           next.cantidadPersonasHogar = total;
           if (total === 1) {
             next.adultosTotales = 1;
             next.menoresDe18 = 0;
+            next.miembrosDiscapacidad = 0;
           } else {
-            next.adultosTotales = Math.max(1, total - next.menoresDe18);
+            next.adultosTotales = Math.max(1, total - next.menoresDe18 - next.miembrosDiscapacidad);
           }
         }
 
@@ -217,8 +221,8 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
           next.adultosMayores60 = 0;
           next.esMonoparentalConHijos24 = false;
           next.tieneConyugeRSH = false;
-        } else if (prev.cantidadPersonasHogar === 1 && next.cantidadPersonasHogar > 1) {
-          // Si pasa de 1 a más integrantes, se inicializan integrantes declarados (hogar - postulante)
+        } else if (next.cantidadPersonasHogar > 1) {
+          // Si tiene más de 1 integrante, los integrantes declarados adicionales son (total - postulante)
           next.integrantesDeclarados = next.cantidadPersonasHogar - 1;
         }
 
@@ -240,6 +244,7 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
             adultosTotales: next.adultosTotales,
             menoresDe18: next.menoresDe18,
             miembrosConDiscapacidad: next.miembrosDiscapacidad,
+            totalIntegrantes: next.cantidadPersonasHogar,
             postulanteEsAdultoMayor: isSingle ? next.postulanteEsAdultoMayor : false,
           });
           next.rshPercentil = rshCalc.percentil;
