@@ -22,6 +22,7 @@ import {
   DS1_MAX_RSH_PERCENTILE,
   DS1_BASE_SAVINGS_UF,
 } from './ds1';
+import { TipoTenencia } from '../rsh/calculator';
 import { DEFAULT_UF_VALUE } from '../../utils/api';
 
 export type SubsidyOptionKey = 'ds49' | 'ds1_t1' | 'ds1_t2' | 'ds1_t3';
@@ -55,6 +56,8 @@ export interface UserSubsidyProfile {
 
   // Vulnerabilidad y Habitabilidad
   dormitorios?: number;
+  totalPersonasVivienda?: number;
+  tipoTenencia?: TipoTenencia;
   indiceHacinamientoDirecto?: number;
   viviendaPrecaria?: boolean;
   aguaPrecaria?: boolean;
@@ -126,6 +129,7 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
   const ahorroActualUF = Math.max(0, profile.ahorroActualUF ?? 0);
   const rsh = profile.rshPercentil;
   const ingresoCLP = Math.max(0, profile.ingresoFamiliarCLP ?? 0);
+  const esPropietario = profile.tipoTenencia === 'PROPIETARIO';
 
   // Determinar capacidad mensual de ahorro en CLP
   const rate = profile.savingsRatePercentage ?? 10;
@@ -179,13 +183,15 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
       : 999;
 
   let ds49Score = 0;
-  const estaBloqueadoDS49 = !ds49ElegibleRSH;
-  const motivoBloqueoDS49 = estaBloqueadoDS49
-    ? `Tu RSH calculado (${rsh}%) supera el 40% máximo permitido para postular al DS49.`
+  const estaBloqueadoDS49 = esPropietario || !ds49ElegibleRSH;
+  const motivoBloqueoDS49 = esPropietario
+    ? 'La normativa MINVU no permite postular a subsidio de compra si ya posees vivienda propia a tu nombre.'
+    : !ds49ElegibleRSH
+    ? `No compatible: Tu RSH calculado de ${rsh}% excede el máximo permitido (supera el 40% exigido).`
     : undefined;
 
   if (estaBloqueadoDS49) {
-    ds49Score -= 2000;
+    ds49Score -= esPropietario ? 5000 : 2000;
   } else {
     ds49Score += 500; // Gran bonificación por 0 deuda bancaria en familias vulnerables
     if (!tieneCapacidadCredito) ds49Score += 250; // Ideal para quienes no acceden a crédito
@@ -214,9 +220,15 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
     viabilidadScore: ds49Score,
     estaBloqueado: estaBloqueadoDS49,
     motivoBloqueo: motivoBloqueoDS49,
-    badge: ds49ElegibleRSH ? 'Vivienda Social Sin Deuda' : 'Bloqueado por RSH',
-    badgeColor: ds49ElegibleRSH ? 'emerald' : 'slate',
-    motivo: ds49ElegibleRSH
+    badge: esPropietario
+      ? 'Bloqueado: Propietario'
+      : ds49ElegibleRSH
+      ? 'Vivienda Social Sin Deuda'
+      : 'Bloqueado por RSH',
+    badgeColor: esPropietario || !ds49ElegibleRSH ? 'slate' : 'emerald',
+    motivo: esPropietario
+      ? 'Incompatible: Ya posees vivienda propia a tu nombre.'
+      : ds49ElegibleRSH
       ? 'Excelente opción sin dividendo para familias del 40% RSH.'
       : 'Incompatible: Requiere Registro Social de Hogares hasta el 40%.',
     detalles: ds49Result,
@@ -266,10 +278,12 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
       esElegibleCredito = false;
     }
 
-    const estaBloqueado = !esElegibleRSH || (requiereCredito && !esElegibleCredito);
+    const estaBloqueado = esPropietario || !esElegibleRSH || (requiereCredito && !esElegibleCredito);
     let motivoBloqueo: string | undefined = undefined;
-    if (!esElegibleRSH) {
-      motivoBloqueo = `Tu RSH calculado (${rsh}%) supera el ${rshMax}% máximo exigido para el Tramo ${tramo.toUpperCase().replace('T', '')}.`;
+    if (esPropietario) {
+      motivoBloqueo = 'La normativa MINVU no permite postular a subsidio de compra si ya posees vivienda propia a tu nombre.';
+    } else if (!esElegibleRSH) {
+      motivoBloqueo = `No compatible: Tu RSH calculado de ${rsh}% excede el máximo permitido (supera el ${rshMax}% exigido).`;
     } else if (requiereCredito && !esElegibleCredito) {
       motivoBloqueo = 'Requiere capacidad o interés de crédito hipotecario bancario para complementar.';
     }
@@ -282,7 +296,9 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
         : 999;
 
     let score = 0;
-    if (!esElegibleRSH) {
+    if (esPropietario) {
+      score -= 5000;
+    } else if (!esElegibleRSH) {
       score -= 2000;
     } else if (requiereCredito && !esElegibleCredito) {
       score -= 1500;
@@ -320,7 +336,10 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
     let badge = 'Alternativa Viable';
     let badgeColor: 'emerald' | 'blue' | 'amber' | 'slate' = 'blue';
 
-    if (!esElegibleRSH) {
+    if (esPropietario) {
+      badge = 'Bloqueado: Propietario';
+      badgeColor = 'slate';
+    } else if (!esElegibleRSH) {
       badge = `Bloqueado: Excede ${rshMax}% RSH`;
       badgeColor = 'slate';
     } else if (requiereCredito && !esElegibleCredito) {
@@ -332,8 +351,10 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
     }
 
     let motivo = '';
-    if (!esElegibleRSH) {
-      motivo = `Tu RSH (${rsh}%) supera el límite permitido (${rshMax}%).`;
+    if (esPropietario) {
+      motivo = 'Incompatible: Ya posees vivienda propia a tu nombre.';
+    } else if (!esElegibleRSH) {
+      motivo = `No compatible: Tu RSH calculado (${rsh}%) supera el límite permitido (${rshMax}%).`;
     } else if (requiereCredito && !esElegibleCredito) {
       motivo = 'Requiere capacidad de crédito hipotecario para complementar el subsidio.';
     } else if (tramo === 't1') {

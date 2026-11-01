@@ -11,6 +11,7 @@ import {
   SavingsRatePreset,
 } from '@/domain/subsidies/ds49';
 import { SubsidyOptionKey } from '@/domain/subsidies/recommendationEngine';
+import { TipoTenencia } from '@/domain/rsh/calculator';
 import { formatCLP } from '@/utils/format';
 
 export interface SubsidyWizardProps {
@@ -32,6 +33,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
     recommendation,
     comparisonResult,
     rshResult,
+    hacinamientoResult,
   } = useDS49Calculator();
 
   // Estados para sincronización bidireccional de Ahorro Actual (CLP y UF)
@@ -104,8 +106,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
     callback(num);
   };
 
-  const personasHogar = Math.max(1, state.cantidadPersonasHogar || 1);
-  const isSingleApplicant = personasHogar === 1;
+  const personasHogar = Math.max(
+    1,
+    state.cantidadPersonasHogar || (state.adultosTotales + state.menoresDe18) || 1
+  );
+  const isSingleApplicant = state.adultosTotales === 1 && state.menoresDe18 === 0;
   const ingresoPerCapita = Math.round(state.ingresoFamiliarCLP / personasHogar);
 
   return (
@@ -233,15 +238,15 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                   </select>
                 </div>
 
-                {/* Cantidad de Personas en el Hogar (Nuevo Cálculo RSH) */}
-                <div className="sm:col-span-2 bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-3">
+                {/* Composición Demográfica del Hogar (Para Escala Oficial RSH) */}
+                <div className="sm:col-span-2 bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <label htmlFor="input-personas-hogar" className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
-                        ¿Cuántas personas van a postular / componen tu hogar? *
-                      </label>
+                      <span className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        1. Composición Demográfica del Hogar (Escala Oficial MDSF) *
+                      </span>
                       <span className="text-[11px] text-slate-500">
-                        1 persona = Postulación individual | 2 o más = Postulación en grupo familiar.
+                        Ponderación oficial: Postulante (1.0) + Adultos (+0.7 c/u) + Menores (+0.5 c/u) + Discapacidad (+0.4 c/u).
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -252,40 +257,97 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                             : 'bg-teal-100 text-teal-900 border border-teal-300'
                         }`}
                       >
-                        {isSingleApplicant ? '👤 Postulante Individual (1 persona)' : `👥 Grupo de ${personasHogar} personas`}
+                        {isSingleApplicant
+                          ? '👤 Hogar Unipersonal (1 postulante)'
+                          : `👥 Núcleo de ${personasHogar} integrantes (${state.adultosTotales} adultos, ${state.menoresDe18} menores)`}
                       </span>
                     </div>
                   </div>
 
-                  {/* Botones rápidos de selección de personas */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {[1, 2, 3, 4, 5, 6].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => updateField('cantidadPersonasHogar', num)}
-                        className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all ${
-                          personasHogar === num
-                            ? 'bg-slate-900 text-white shadow-sm scale-105'
-                            : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
-                        }`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    <div>
+                      <label
+                        htmlFor="input-adultos-totales"
+                        className="block text-xs font-bold text-slate-700 mb-1"
                       >
-                        {num === 6 ? '6+' : num} {num === 1 ? 'persona' : 'personas'}
-                      </button>
-                    ))}
-                    <div className="relative w-28">
+                        Adultos en el hogar (Postulante + otros $\ge$ 18)
+                      </label>
                       <input
-                        id="input-personas-hogar"
+                        id="input-adultos-totales"
                         type="number"
                         min="1"
-                        max="15"
-                        value={personasHogar}
+                        max="12"
+                        value={state.adultosTotales}
                         onChange={(e) =>
-                          updateField('cantidadPersonasHogar', Math.max(1, parseInt(e.target.value, 10) || 1))
+                          updateField('adultosTotales', Math.max(1, parseInt(e.target.value, 10) || 1))
                         }
-                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 text-center focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        Mínimo 1 (tú como postulante principal).
+                      </span>
                     </div>
+
+                    <div>
+                      <label
+                        htmlFor="input-menores-18-demog"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        Menores de edad (0 a 17 años)
+                      </label>
+                      <input
+                        id="input-menores-18-demog"
+                        type="number"
+                        min="0"
+                        max="10"
+                        value={state.menoresDe18}
+                        onChange={(e) =>
+                          updateField('menoresDe18', Math.max(0, parseInt(e.target.value, 10) || 0))
+                        }
+                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        Ponderan factor 0.5 en escala de necesidades.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="input-miembros-discapacidad-rsh"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        Miembros con discapacidad / dependencia
+                      </label>
+                      <input
+                        id="input-miembros-discapacidad-rsh"
+                        type="number"
+                        min="0"
+                        max="5"
+                        value={state.miembrosDiscapacidad}
+                        onChange={(e) =>
+                          updateField('miembrosDiscapacidad', Math.max(0, parseInt(e.target.value, 10) || 0))
+                        }
+                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        Ajuste +0.4 en escala de necesidades.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-medium">
+                      <input
+                        type="checkbox"
+                        checked={state.postulanteEsAdultoMayor}
+                        onChange={(e) => updateField('postulanteEsAdultoMayor', e.target.checked)}
+                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
+                      />
+                      <span>
+                        El postulante principal tiene <strong>60 o más años (Adulto Mayor)</strong>
+                        {isSingleApplicant && ' (Ajuste +0.2 en escala de hogar unipersonal)'}
+                      </span>
+                    </label>
                   </div>
                 </div>
 
@@ -295,7 +357,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     htmlFor="input-ingreso"
                     className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1"
                   >
-                    Ingreso Familiar Mensual Líquido Total (CLP) *
+                    2. Ingreso Familiar Mensual Líquido Total (CLP) *
                   </label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold">$</span>
@@ -312,48 +374,228 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     />
                   </div>
                   <span className="text-[11px] text-slate-400 mt-1 block">
-                    Suma de ingresos líquidos de todos los miembros del hogar.
+                    Suma de remuneraciones líquidas mensuales de todos los integrantes que generan ingresos en el hogar.
                   </span>
                 </div>
 
-                {/* Tarjeta Visual del Tramo RSH Calculado con Escala de Adultos Equivalentes */}
-                <div className="sm:col-span-2 bg-gradient-to-r from-teal-50/90 to-emerald-50/90 border border-teal-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-600 text-white flex flex-col items-center justify-center font-black shrink-0 shadow-sm">
-                      <span className="text-sm leading-none font-black">{rshResult.percentil}%</span>
-                      <span className="text-[9px] uppercase font-bold tracking-tighter text-teal-100">RSH</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-extrabold uppercase tracking-wider text-teal-800">
-                          Inferencia Automática RSH (Escala MDSF)
+                {/* Situación Habitacional & Tenencia */}
+                <div className="sm:col-span-2 bg-slate-50 border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      3. Situación Habitacional & Tenencia de Vivienda *
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      Indica si vives como allegado/a, arrendatario/a independiente o si ya posees vivienda propia.
+                    </span>
+                  </div>
+
+                  {/* Selector Segmentado de Tipo de Tenencia */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {[
+                      { key: 'ALLEGADO' as TipoTenencia, label: '🏠 Allegado / Compartiendo', desc: 'Vives en casa de familiares u otros' },
+                      { key: 'ARRENDATARIO' as TipoTenencia, label: '🔑 Arrendatario', desc: 'Arriendas vivienda independiente' },
+                      { key: 'PROPIETARIO' as TipoTenencia, label: '🚫 Propietario', desc: 'Tienes vivienda a tu nombre' },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => updateField('tipoTenencia', item.key)}
+                        className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                          state.tipoTenencia === item.key
+                            ? item.key === 'PROPIETARIO'
+                              ? 'bg-rose-900 text-white border-rose-900 shadow-sm scale-[1.01]'
+                              : 'bg-slate-900 text-white border-slate-900 shadow-sm scale-[1.01]'
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-slate-400 hover:bg-slate-100/60'
+                        }`}
+                      >
+                        <span className="text-xs font-extrabold">{item.label}</span>
+                        <span
+                          className={`text-[10px] mt-1 font-medium ${
+                            state.tipoTenencia === item.key ? 'text-slate-200' : 'text-slate-500'
+                          }`}
+                        >
+                          {item.desc}
                         </span>
-                        <span className="text-[10px] bg-teal-200 text-teal-900 font-bold px-2 py-0.2 rounded-full">
-                          Adultos Equivalentes
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Advertencia si es Propietario */}
+                  {state.tipoTenencia === 'PROPIETARIO' && (
+                    <div className="bg-rose-50 border-2 border-rose-300 rounded-xl p-3.5 text-xs text-rose-950 flex items-start gap-3 animate-fade-in">
+                      <span className="text-xl shrink-0">🚫</span>
+                      <div>
+                        <span className="font-extrabold text-xs uppercase tracking-wider text-rose-900 block">
+                          Restricción Normativa MINVU: Propietario de Vivienda
                         </span>
+                        <p className="mt-0.5 text-rose-800 leading-relaxed text-[11px]">
+                          La normativa legal del MINVU no permite postular a subsidios estatales de adquisición habitacional (DS49, DS1) si el postulante o algún miembro del hogar ya posee una vivienda inscrita a su nombre. Todos los subsidios quedarán bloqueados en la matriz comparativa.
+                        </p>
                       </div>
-                      <p className="text-xs text-teal-950 font-medium mt-0.5">
-                        Ingreso equivalente: <strong>{formatCLP(rshResult.ingresoEquivalente)} CLP</strong> (Escala: <strong>{rshResult.escalaEquivalencia}</strong> para {personasHogar} {personasHogar === 1 ? 'postulante' : 'integrantes'}).
-                      </p>
-                      <span className="text-[11px] text-teal-700 block mt-0.5 font-medium">
-                        {rshResult.percentil <= 40
-                          ? '🎯 Calificas con máxima prioridad para el Subsidio DS49 (vivienda social sin crédito) y DS1 Tramo 1.'
-                          : rshResult.percentil <= 60
-                          ? '🎯 Calificas para el Subsidio DS1 Tramo 1 y Tramo 2 (Sectores Medios con ahorro).'
-                          : rshResult.percentil <= 80
-                          ? '🎯 Calificas para el Subsidio DS1 Tramo 2 y Tramo 3.'
-                          : rshResult.percentil <= 90
-                          ? '🎯 Calificas para el Subsidio DS1 Tramo 3 y Proyectos de Integración Social DS19.'
-                          : '🎯 Calificas para Proyectos de Integración Social DS19 (Sin postulación MINVU).'}
+                    </div>
+                  )}
+
+                  {/* Inputs de Hacinamiento (Dormitorios y Total Personas) */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <label
+                        htmlFor="input-dormitorios-paso1"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        Dormitorios de uso exclusivo o familiar en la vivienda actual
+                      </label>
+                      <input
+                        id="input-dormitorios-paso1"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={state.dormitorios}
+                        onChange={(e) =>
+                          updateField('dormitorios', Math.max(1, parseInt(e.target.value, 10) || 1))
+                        }
+                        className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        Mínimo 1 dormitorio.
+                      </span>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="input-personas-vivienda-paso1"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        Total de personas durmiendo en el inmueble
+                      </label>
+                      <input
+                        id="input-personas-vivienda-paso1"
+                        type="number"
+                        min={personasHogar}
+                        max="25"
+                        disabled={state.tipoTenencia === 'ARRENDATARIO'}
+                        value={state.tipoTenencia === 'ARRENDATARIO' ? personasHogar : state.totalPersonasVivienda}
+                        onChange={(e) =>
+                          updateField('totalPersonasVivienda', Math.max(personasHogar, parseInt(e.target.value, 10) || personasHogar))
+                        }
+                        className={`w-full border rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                          state.tipoTenencia === 'ARRENDATARIO'
+                            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                            : 'bg-white text-slate-800 border-slate-300'
+                        }`}
+                      />
+                      <span className="text-[10px] text-slate-500 mt-0.5 block">
+                        {state.tipoTenencia === 'ARRENDATARIO'
+                          ? `Fijado en ${personasHogar} (arriendo independiente de tu núcleo).`
+                          : `Incluye dueños de casa y parientes (mínimo ${personasHogar}).`}
                       </span>
                     </div>
                   </div>
+                </div>
 
-                  <div className="text-right shrink-0">
-                    <span className="text-[11px] text-slate-500 block">Tramo Asignado</span>
-                    <span className="text-xs font-black text-teal-900 bg-white px-3 py-1 rounded-xl border border-teal-300 shadow-2xs block">
-                      {rshResult.tramoLabel}
-                    </span>
+                {/* Live Cards: RSH y Hacinamiento Reactivo */}
+                <div className="sm:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Tarjeta 1: RSH Reactivo */}
+                  <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-teal-600 text-white flex flex-col items-center justify-center font-black shrink-0 shadow-xs">
+                          <span className="text-sm leading-none">{rshResult.percentil}%</span>
+                          <span className="text-[8px] uppercase tracking-tighter text-teal-100">RSH</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800 block">
+                            Inferencia RSH (Escala MDSF)
+                          </span>
+                          <h4 className="text-sm font-black text-teal-950">
+                            {rshResult.tramoLabel}
+                          </h4>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-teal-300 text-teal-900 shrink-0">
+                        Escala: {rshResult.escalaEquivalencia}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-teal-950 font-medium space-y-1">
+                      <p>
+                        Ingreso equivalente: <strong>{formatCLP(rshResult.ingresoEquivalente)} CLP</strong>
+                      </p>
+                      <div className="flex flex-wrap gap-1 text-[10px] text-teal-800">
+                        <span className="bg-white/80 px-1.5 py-0.5 rounded border border-teal-200">Base: 1.0</span>
+                        {rshResult.detallesEscala.adultosAdicionales > 0 && (
+                          <span className="bg-white/80 px-1.5 py-0.5 rounded border border-teal-200">
+                            Adultos: +{rshResult.detallesEscala.adultosAdicionales}
+                          </span>
+                        )}
+                        {rshResult.detallesEscala.menores > 0 && (
+                          <span className="bg-white/80 px-1.5 py-0.5 rounded border border-teal-200">
+                            Menores: +{rshResult.detallesEscala.menores}
+                          </span>
+                        )}
+                        {rshResult.detallesEscala.ajusteDiscapacidad > 0 && (
+                          <span className="bg-white/80 px-1.5 py-0.5 rounded border border-teal-200">
+                            Discap.: +{rshResult.detallesEscala.ajusteDiscapacidad}
+                          </span>
+                        )}
+                        {rshResult.detallesEscala.ajusteAdultoMayor > 0 && (
+                          <span className="bg-white/80 px-1.5 py-0.5 rounded border border-teal-200">
+                            Adulto Mayor: +{rshResult.detallesEscala.ajusteAdultoMayor}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-teal-700 pt-1 font-medium leading-tight">
+                        {rshResult.percentil <= 40
+                          ? '🎯 Calificas con máxima prioridad para DS49 (social sin crédito) y DS1 Tramo 1.'
+                          : rshResult.percentil <= 60
+                          ? '🎯 Calificas para DS1 Tramo 1 y Tramo 2 (Sectores Medios).'
+                          : rshResult.percentil <= 80
+                          ? '🎯 Calificas para DS1 Tramo 2 y Tramo 3.'
+                          : rshResult.percentil <= 90
+                          ? '🎯 Calificas para DS1 Tramo 3 y Proyectos DS19.'
+                          : '🎯 Calificas para Proyectos de Integración Social DS19.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta 2: Hacinamiento Reactivo */}
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4 sm:p-5 flex flex-col justify-between shadow-xs space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-xl bg-blue-600 text-white flex flex-col items-center justify-center font-black shrink-0 shadow-xs">
+                          <span className="text-xs leading-none">{hacinamientoResult.ratio.toFixed(1)}</span>
+                          <span className="text-[8px] uppercase tracking-tighter text-blue-100">Ratio</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-800 block">
+                            Índice de Hacinamiento
+                          </span>
+                          <h4 className="text-sm font-black text-blue-950">
+                            {hacinamientoResult.ratio.toFixed(2)} pers/dormitorio
+                          </h4>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-blue-300 text-blue-900 shrink-0">
+                        {state.tipoTenencia === 'ALLEGADO' ? 'Allegado' : state.tipoTenencia === 'ARRENDATARIO' ? 'Arrendatario' : 'Propietario'}
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-blue-950 space-y-1.5">
+                      <div className="flex items-center justify-between bg-white/80 p-1.5 rounded-lg border border-blue-200">
+                        <span className="text-[11px] font-semibold text-slate-700">Puntaje DS49:</span>
+                        <span className="font-extrabold text-blue-900">
+                          {hacinamientoResult.ds49.puntos > 0 ? `+${hacinamientoResult.ds49.puntos} pts` : '0 pts'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between bg-white/80 p-1.5 rounded-lg border border-blue-200">
+                        <span className="text-[11px] font-semibold text-slate-700">Puntaje DS1:</span>
+                        <span className="font-extrabold text-blue-900">
+                          {hacinamientoResult.ds1.puntos > 0 ? `+${hacinamientoResult.ds1.puntos} pts` : '0 pts'}
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-blue-700 block leading-tight pt-0.5">
+                        {hacinamientoResult.ds49.descripcion}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -768,79 +1010,68 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                 </p>
               </div>
 
-              {/* Habitabilidad y Hacinamiento */}
+              {/* Vulnerabilidad Habitacional Complementaria */}
               <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50 space-y-4">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Factor B: Vulnerabilidad Habitacional & Hacinamiento
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    Factor B: Vulnerabilidad Habitacional Complementaria
+                  </h4>
+                  <span className="text-[11px] font-bold text-slate-500">
+                    Hacinamiento evaluado en Paso 1 ({hacinamientoResult.ratio.toFixed(2)} pers/dorm)
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      htmlFor="input-dormitorios"
-                      className="block text-xs font-bold text-slate-700 mb-1"
-                    >
-                      Dormitorios en la vivienda actual *
-                    </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 font-medium p-2.5 bg-white rounded-xl border border-slate-200 hover:border-slate-300">
                     <input
-                      id="input-dormitorios"
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={state.dormitorios}
-                      onChange={(e) =>
-                        updateField('dormitorios', Math.max(1, parseInt(e.target.value, 10) || 1))
-                      }
-                      className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      type="checkbox"
+                      checked={state.viviendaPrecaria}
+                      onChange={(e) => updateField('viviendaPrecaria', e.target.checked)}
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
                     />
-                    <span className="text-[11px] text-slate-500 mt-1 block">
-                      Índice: {(personasHogar / state.dormitorios).toFixed(2)} personas/dormitorio
-                      {(personasHogar / state.dormitorios) >= 5 ? ' (280 pts)' : (personasHogar / state.dormitorios) >= 2.5 ? ' (140 pts)' : ' (0 pts)'}
-                    </span>
-                  </div>
+                    <span>Vivienda precaria (piso tierra, mediagua, desecho) <strong>(+140 pts)</strong></span>
+                  </label>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-medium">
-                      <input
-                        type="checkbox"
-                        checked={state.viviendaPrecaria}
-                        onChange={(e) => updateField('viviendaPrecaria', e.target.checked)}
-                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
-                      />
-                      <span>Vivienda precaria (piso tierra, mediagua, desecho) <strong>(+140 pts)</strong></span>
-                    </label>
+                  <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 font-medium p-2.5 bg-white rounded-xl border border-slate-200 hover:border-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={state.aguaPrecaria}
+                      onChange={(e) => updateField('aguaPrecaria', e.target.checked)}
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
+                    />
+                    <span>Agua precaria (acarreo o llave fuera de vivienda) <strong>(+30 pts)</strong></span>
+                  </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-medium">
-                      <input
-                        type="checkbox"
-                        checked={state.aguaPrecaria}
-                        onChange={(e) => updateField('aguaPrecaria', e.target.checked)}
-                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
-                      />
-                      <span>Agua precaria (acarreo o llave fuera de vivienda) <strong>(+30 pts)</strong></span>
-                    </label>
+                  <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 font-medium p-2.5 bg-white rounded-xl border border-slate-200 hover:border-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={state.banoPrecario}
+                      onChange={(e) => updateField('banoPrecario', e.target.checked)}
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
+                    />
+                    <span>Baño precario (letrina, pozo negro o sin servicio) <strong>(+30 pts)</strong></span>
+                  </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-medium">
-                      <input
-                        type="checkbox"
-                        checked={state.banoPrecario}
-                        onChange={(e) => updateField('banoPrecario', e.target.checked)}
-                        className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
-                      />
-                      <span>Baño precario (letrina, pozo negro o sin servicio) <strong>(+30 pts)</strong></span>
-                    </label>
-                  </div>
+                  <label className="flex items-center gap-2.5 cursor-pointer text-xs text-slate-700 font-medium p-2.5 bg-white rounded-xl border border-slate-200 hover:border-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={state.viviendaDestruida}
+                      onChange={(e) => updateField('viviendaDestruida', e.target.checked)}
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
+                    />
+                    <span>Vivienda destruida o inhabitable por catástrofe <strong>(+50 pts)</strong></span>
+                  </label>
                 </div>
               </div>
 
-              {/* Antigüedad de Libreta y Postulación */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Antigüedad de Libreta, Postulación y Arriendo */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label
                     htmlFor="input-meses-libreta"
                     className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1"
                   >
-                    Meses de Antigüedad de la Libreta (Factor D)
+                    Antigüedad de la Libreta (Meses)
                   </label>
                   <input
                     id="input-meses-libreta"
@@ -853,7 +1084,9 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     }
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
-                  <span className="text-[11px] text-slate-500 mt-1 block">1 pt por mes (máximo 40 pts).</span>
+                  <span className="text-[11px] text-slate-500 mt-1 block">
+                    DS49: 1 pt/mes (máx 40 pts) | DS1: hasta 25 pts/semestre.
+                  </span>
                 </div>
 
                 <div>
@@ -861,7 +1094,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     htmlFor="input-postulaciones-indiv"
                     className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1"
                   >
-                    Postulaciones Previas No Seleccionadas (Factor C)
+                    Postulaciones Previas Sin Éxito
                   </label>
                   <input
                     id="input-postulaciones-indiv"
@@ -874,10 +1107,35 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     }
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
-                  <span className="text-[11px] text-slate-500 mt-1 block">40 pts individuales c/u (Tope: 160 pts).</span>
+                  <span className="text-[11px] text-slate-500 mt-1 block">
+                    DS49: 40 pts c/u (Tope: 160 pts) | DS1: 25 pts c/u.
+                  </span>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div>
+                  <label
+                    htmlFor="input-meses-arriendo"
+                    className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1"
+                  >
+                    Subsidio Arriendo DS52 (Copago al Día)
+                  </label>
+                  <input
+                    id="input-meses-arriendo"
+                    type="number"
+                    min="0"
+                    max="60"
+                    value={state.mesesArriendoAlDia}
+                    onChange={(e) =>
+                      updateField('mesesArriendoAlDia', Math.max(0, parseInt(e.target.value, 10) || 0))
+                    }
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
+                  <span className="text-[11px] text-slate-500 mt-1 block">
+                    +80 pts cada 12 meses de copago al día (máx 240 pts).
+                  </span>
+                </div>
+
+                <div className="sm:col-span-3">
                   <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 font-medium">
                     <input
                       type="checkbox"
@@ -886,7 +1144,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
                     />
                     <span>
-                      <strong>Constancia de ahorro:</strong> Saldo medio del semestre previo $\ge$ 12.5% del saldo acreditado <strong>(+10 pts)</strong>
+                      <strong>Constancia de ahorro:</strong> Saldo medio del semestre previo $\ge$ 12.5% del saldo acreditado <strong>(+10 pts en DS49 / permanencia DS1)</strong>
                     </span>
                   </label>
                 </div>

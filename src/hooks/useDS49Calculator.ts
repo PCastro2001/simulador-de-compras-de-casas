@@ -20,6 +20,9 @@ import {
   calculateRSH,
   RSHCalculationResult,
   calculateEquivalenceScale,
+  TipoTenencia,
+  HacinamientoResult,
+  calculateHacinamiento,
 } from '@/domain/rsh/calculator';
 import { fetchUFValue, DEFAULT_UF_VALUE } from '@/utils/api';
 
@@ -43,17 +46,21 @@ export function calculateRSHFromIncome(
   discapacidad: number = 0
 ): number {
   return calculateRSH({
-    ingresoLiquidoFamiliar: ingresoFamiliarCLP,
-    totalIntegrantes: totalPersonasHogar,
+    ingresoLiquidoMensualClp: ingresoFamiliarCLP,
+    adultosTotales: Math.max(1, totalPersonasHogar - menoresDe18),
     menoresDe18,
-    miembrosDiscapacidad: discapacidad,
+    miembrosConDiscapacidad: discapacidad,
+    postulanteEsAdultoMayor: false,
   }).percentil;
 }
 
 export interface UseDS49CalculatorState {
-  // Datos del postulante y hogar
+  // Datos del postulante y hogar (v1.5.0)
   region: DS49Region;
-  cantidadPersonasHogar: number; // Personas totales en el hogar (1 = individual, >1 = grupo familiar)
+  adultosTotales: number; // Postulante (1) + otros adultos (>= 1)
+  menoresDe18: number;
+  postulanteEsAdultoMayor: boolean;
+  cantidadPersonasHogar: number; // Suma de adultosTotales + menoresDe18
   rshPercentil: number; // 40, 60, 80, 90, 100 (calculado automáticamente)
   ingresoFamiliarCLP: number;
   savingsRatePreset: SavingsRatePreset; // 5, 10, 15, 'custom'
@@ -70,20 +77,24 @@ export interface UseDS49CalculatorState {
   servicioMilitar: number;
   perteneceGendarmeria: boolean;
 
-  // Factor B: Vulnerabilidad Habitacional
+  // Factor B: Vulnerabilidad Habitacional & Tenencia (v1.5.0)
   dormitorios: number;
+  totalPersonasVivienda: number;
+  tipoTenencia: TipoTenencia;
   indiceHacinamientoDirecto?: number;
   viviendaPrecaria: boolean;
   aguaPrecaria: boolean;
   banoPrecario: boolean;
+  viviendaDestruida: boolean;
 
   // Factor C: Antigüedad de Postulación
   postulacionesPreviasIndividuales: number;
   postulacionesPreviasColectivas: number;
 
-  // Factor D: Libreta de Ahorro
+  // Factor D: Libreta de Ahorro y Arriendo
   mesesLibretaAhorro: number;
   saldoMedioCumplePermanencia: boolean;
+  mesesArriendoAlDia: number;
 
   // Factor E: Condiciones Especiales
   miembrosDiscapacidad: number;
@@ -94,6 +105,9 @@ export interface UseDS49CalculatorState {
 
 const DEFAULT_STATE: UseDS49CalculatorState = {
   region: 'metropolitana',
+  adultosTotales: 2,
+  menoresDe18: 1,
+  postulanteEsAdultoMayor: false,
   cantidadPersonasHogar: 3,
   rshPercentil: 40,
   ingresoFamiliarCLP: 500000,
@@ -110,17 +124,21 @@ const DEFAULT_STATE: UseDS49CalculatorState = {
   servicioMilitar: 0,
   perteneceGendarmeria: false,
 
-  dormitorios: 1,
-  indiceHacinamientoDirecto: undefined,
+  dormitorios: 2,
+  totalPersonasVivienda: 5,
+  tipoTenencia: 'ALLEGADO',
+  indiceHacinamientoDirecto: 2.5,
   viviendaPrecaria: false,
   aguaPrecaria: false,
   banoPrecario: false,
+  viviendaDestruida: false,
 
   postulacionesPreviasIndividuales: 1,
   postulacionesPreviasColectivas: 0,
 
   mesesLibretaAhorro: 18,
   saldoMedioCumplePermanencia: true,
+  mesesArriendoAlDia: 0,
 
   miembrosDiscapacidad: 0,
   victimaValechRettig: false,
@@ -165,53 +183,66 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
       setState((prev) => {
         const next = { ...prev, [key]: value };
 
-        // Si cambia el ingreso, cantidad de personas o composición, recalculamos el RSH con adultos equivalentes
+        // Sincronización demográfica
+        if (key === 'adultosTotales') {
+          next.adultosTotales = Math.max(1, Number(value));
+          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18;
+        } else if (key === 'menoresDe18') {
+          next.menoresDe18 = Math.max(0, Number(value));
+          next.cantidadPersonasHogar = next.adultosTotales + next.menoresDe18;
+        } else if (key === 'cantidadPersonasHogar') {
+          const total = Math.max(1, Number(value));
+          next.cantidadPersonasHogar = total;
+          if (total === 1) {
+            next.adultosTotales = 1;
+            next.menoresDe18 = 0;
+          } else {
+            next.adultosTotales = Math.max(1, total - next.menoresDe18);
+          }
+        }
+
+        // Si es arrendatario, el total de personas en la vivienda es igual al núcleo familiar
+        if (next.tipoTenencia === 'ARRENDATARIO') {
+          next.totalPersonasVivienda = next.cantidadPersonasHogar;
+        } else if (key === 'totalPersonasVivienda') {
+          next.totalPersonasVivienda = Math.max(next.cantidadPersonasHogar, Number(value));
+        }
+
+        // Si postula 1 persona (hogar unipersonal):
+        // Se cancelan / no aplican los integrantes declarados, menores, adultos mayores y monoparentalidad
+        if (next.cantidadPersonasHogar === 1) {
+          next.integrantesDeclarados = 0;
+          next.menoresHasta5 = 0;
+          next.menores6a18 = 0;
+          next.adultosMayores60 = 0;
+          next.esMonoparentalConHijos24 = false;
+          next.tieneConyugeRSH = false;
+        } else if (prev.cantidadPersonasHogar === 1 && next.cantidadPersonasHogar > 1) {
+          // Si pasa de 1 a más integrantes, se inicializan integrantes declarados (hogar - postulante)
+          next.integrantesDeclarados = next.cantidadPersonasHogar - 1;
+        }
+
+        // Si cambia cualquier variable relevante para el RSH, recalculamos con la escala oficial de adultos equivalentes
         if (
           key === 'ingresoFamiliarCLP' ||
+          key === 'adultosTotales' ||
+          key === 'menoresDe18' ||
           key === 'cantidadPersonasHogar' ||
+          key === 'postulanteEsAdultoMayor' ||
+          key === 'miembrosDiscapacidad' ||
           key === 'menoresHasta5' ||
           key === 'menores6a18' ||
-          key === 'adultosMayores60' ||
-          key === 'miembrosDiscapacidad'
+          key === 'adultosMayores60'
         ) {
-          const nextIngreso =
-            key === 'ingresoFamiliarCLP' ? Number(value) : prev.ingresoFamiliarCLP;
-          const nextPersonas =
-            key === 'cantidadPersonasHogar'
-              ? Math.max(1, Number(value))
-              : prev.cantidadPersonasHogar;
-          const nextMenores =
-            (key === 'menoresHasta5' ? Number(value) : prev.menoresHasta5) +
-            (key === 'menores6a18' ? Number(value) : prev.menores6a18);
-          const nextDiscapacidad =
-            key === 'miembrosDiscapacidad' ? Number(value) : prev.miembrosDiscapacidad;
-          const nextAdultosMayores =
-            key === 'adultosMayores60' ? Number(value) : prev.adultosMayores60;
-
-          // Si postula 1 persona (postulación individual):
-          // Se cancelan / no aplican los integrantes declarados, menores, adultos mayores y monoparentalidad
-          if (nextPersonas === 1) {
-            next.integrantesDeclarados = 0;
-            next.menoresHasta5 = 0;
-            next.menores6a18 = 0;
-            next.adultosMayores60 = 0;
-            next.esMonoparentalConHijos24 = false;
-            next.tieneConyugeRSH = false;
-          } else if (prev.cantidadPersonasHogar === 1 && nextPersonas > 1) {
-            // Si pasa de 1 a más integrantes, se inicializan integrantes declarados (hogar - postulante)
-            next.integrantesDeclarados = nextPersonas - 1;
-          }
-
-          // Inferencia automática oficial con escala de necesidades
-          next.rshPercentil = calculateRSH({
-            ingresoLiquidoFamiliar: nextIngreso,
-            totalIntegrantes: nextPersonas,
-            menoresDe18: nextPersonas === 1 ? 0 : nextMenores,
-            miembrosDiscapacidad: nextDiscapacidad,
-            adultosMayores60: nextPersonas === 1 ? 0 : nextAdultosMayores,
-            postulanteEsAdultoMayor: nextPersonas === 1 && nextAdultosMayores > 0,
-            postulanteTieneDiscapacidad: nextPersonas === 1 && nextDiscapacidad > 0,
-          }).percentil;
+          const isSingle = next.cantidadPersonasHogar === 1;
+          const rshCalc = calculateRSH({
+            ingresoLiquidoMensualClp: next.ingresoFamiliarCLP,
+            adultosTotales: next.adultosTotales,
+            menoresDe18: next.menoresDe18,
+            miembrosConDiscapacidad: next.miembrosDiscapacidad,
+            postulanteEsAdultoMayor: isSingle ? next.postulanteEsAdultoMayor : false,
+          });
+          next.rshPercentil = rshCalc.percentil;
         }
 
         // Si se actualiza el ingreso y el usuario tiene un porcentaje prefijado (5, 10, 15),
@@ -265,6 +296,15 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
     setState(DEFAULT_STATE);
   }, []);
 
+  // Hacinamiento reactivo según dormitorios, personas en la vivienda y tenencia (v1.5.0)
+  const hacinamientoResult: HacinamientoResult = useMemo(() => {
+    return calculateHacinamiento({
+      dormitorios: state.dormitorios,
+      totalPersonasVivienda: state.totalPersonasVivienda,
+      tipoTenencia: state.tipoTenencia,
+    });
+  }, [state.dormitorios, state.totalPersonasVivienda, state.tipoTenencia]);
+
   // Construcción del objeto de entrada para evaluateDS49
   const ds49Input: DS49PostulacionInput = useMemo(() => {
     return {
@@ -278,7 +318,7 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
       perteneceGendarmeria: state.perteneceGendarmeria,
 
       dormitorios: state.dormitorios,
-      indiceHacinamiento: state.indiceHacinamientoDirecto,
+      indiceHacinamiento: hacinamientoResult.ratio,
       viviendaPrecaria: state.viviendaPrecaria,
       aguaPrecaria: state.aguaPrecaria,
       banoPrecario: state.banoPrecario,
@@ -298,7 +338,7 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
       ingresoDisponibleMensualCLP: state.capacidadAhorroCLP,
       valorUF: ufValue,
     };
-  }, [state, ufValue]);
+  }, [state, hacinamientoResult.ratio, ufValue]);
 
   // Ejecución memoizada del motor normativo DS49
   const calculationResult: DS49CalculationResult = useMemo(() => {
@@ -386,21 +426,19 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
   const rshResult: RSHCalculationResult = useMemo(() => {
     const isSingle = state.cantidadPersonasHogar === 1;
     return calculateRSH({
-      ingresoLiquidoFamiliar: state.ingresoFamiliarCLP,
-      totalIntegrantes: state.cantidadPersonasHogar,
-      menoresDe18: isSingle ? 0 : (state.menoresHasta5 || 0) + (state.menores6a18 || 0),
-      adultosMayores60: isSingle ? 0 : state.adultosMayores60,
-      miembrosDiscapacidad: state.miembrosDiscapacidad,
-      postulanteEsAdultoMayor: isSingle && state.adultosMayores60 > 0,
-      postulanteTieneDiscapacidad: isSingle && state.miembrosDiscapacidad > 0,
+      ingresoLiquidoMensualClp: state.ingresoFamiliarCLP,
+      adultosTotales: state.adultosTotales,
+      menoresDe18: state.menoresDe18,
+      miembrosConDiscapacidad: state.miembrosDiscapacidad,
+      postulanteEsAdultoMayor: isSingle ? state.postulanteEsAdultoMayor : false,
     });
   }, [
     state.ingresoFamiliarCLP,
-    state.cantidadPersonasHogar,
-    state.menoresHasta5,
-    state.menores6a18,
-    state.adultosMayores60,
+    state.adultosTotales,
+    state.menoresDe18,
     state.miembrosDiscapacidad,
+    state.postulanteEsAdultoMayor,
+    state.cantidadPersonasHogar,
   ]);
 
   // Perfil unificado para la matriz de recomendación multitramo
@@ -421,23 +459,28 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
       menoresHasta5: state.menoresHasta5,
       menores6a18: state.menores6a18,
       adultosMayores60: state.adultosMayores60,
+      postulanteMayor60: state.postulanteEsAdultoMayor,
       bomberosActivos: state.bomberosActivos,
       servicioMilitar: state.servicioMilitar,
       perteneceGendarmeria: state.perteneceGendarmeria,
       dormitorios: state.dormitorios,
-      indiceHacinamientoDirecto: state.indiceHacinamientoDirecto,
+      totalPersonasVivienda: state.totalPersonasVivienda,
+      tipoTenencia: state.tipoTenencia,
+      indiceHacinamientoDirecto: hacinamientoResult.ratio,
       viviendaPrecaria: state.viviendaPrecaria,
       aguaPrecaria: state.aguaPrecaria,
       banoPrecario: state.banoPrecario,
+      viviendaDestruida: state.viviendaDestruida,
       postulacionesPrevias: state.postulacionesPreviasIndividuales,
       mesesLibretaAhorro: state.mesesLibretaAhorro,
       saldoMedioCumplePermanencia: state.saldoMedioCumplePermanencia,
+      mesesArriendoAlDia: state.mesesArriendoAlDia,
       miembrosDiscapacidad: state.miembrosDiscapacidad,
       victimaValechRettig: state.victimaValechRettig,
       esMonoparentalConHijos24: state.esMonoparentalConHijos24,
       tieneConyugeRSH: state.tieneConyugeRSH,
     };
-  }, [state, rshResult.percentil, ufValue]);
+  }, [state, rshResult.percentil, hacinamientoResult.ratio, ufValue]);
 
   // Evaluación paralela en el motor comparador
   const comparisonResult: RecommendationEngineResult = useMemo(() => {
@@ -457,6 +500,7 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
     recommendation,
     comparisonResult,
     rshResult,
+    hacinamientoResult,
     cutoffs: DS49_REGIONAL_CUTOFFS_2025,
   };
 }
