@@ -13,7 +13,7 @@ export default function SubsidiesMenuPage() {
       href: "/asistente-subsidios",
       categoria: "Orientación Guiada",
       titulo: "Asistente de Subsidios",
-      descripcion: "Responde preguntas interactivas para descartar opciones y descubrir el beneficio que te corresponde."
+      descripcion: "Descubre tu subsidio ideal (DS49, DS1 T1, T2 y T3) con inferencia RSH y cálculo de ahorro mínimo para ganar."
     },
     {
       href: "/subsidies",
@@ -73,17 +73,17 @@ export default function SubsidiesMenuPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tarjeta Perfil A: Descubrimiento Total */}
+              {/* Tarjeta: Conoce el Mejor Subsidio para ti */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:border-[#6b9ac4] hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between group">
                 <div>
                   <div className="w-12 h-12 bg-blue-50 text-[#6b9ac4] rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-[#6b9ac4] group-hover:text-white transition-colors duration-300">
-                    👤
+                    ✨
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">
-                    Primera vez buscando casa / No sé por dónde empezar
+                    Conoce el Mejor Subsidio para ti
                   </h3>
                   <p className="text-xs md:text-sm text-slate-500 leading-relaxed mb-6">
-                    Te guiaremos paso a paso para identificar el subsidio estatal que te corresponde según tu ficha social RSH e ingresos familiares.
+                    Evaluamos tu grupo familiar con la escala oficial de adultos equivalentes del RSH y calculamos exactamente tu ahorro mínimo para ganar entre DS49, DS1 T1, T2 y T3.
                   </p>
                   
                   {/* Timeline visual */}
@@ -94,8 +94,8 @@ export default function SubsidiesMenuPage() {
                         <div className="w-0.5 h-6 bg-slate-200"></div>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-800">Diagnóstico Social</h4>
-                        <p className="text-[11px] text-slate-400">Estimamos tu tramo de vulnerabilidad (Ficha RSH).</p>
+                        <h4 className="text-xs font-bold text-slate-800">Inferencia RSH Oficial</h4>
+                        <p className="text-[11px] text-slate-400">Escala de adultos equivalentes y necesidades según MDSF.</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
@@ -104,8 +104,8 @@ export default function SubsidiesMenuPage() {
                         <div className="w-0.5 h-6 bg-slate-200"></div>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-800">Descarte Inteligente</h4>
-                        <p className="text-[11px] text-slate-400">Filtramos y sugerimos el subsidio ideal según tu ahorro.</p>
+                        <h4 className="text-xs font-bold text-slate-800">Matriz Comparativa Multitramo</h4>
+                        <p className="text-[11px] text-slate-400">Clasificación en vivo entre DS49, DS1 T1, T2 y T3.</p>
                       </div>
                     </div>
                     <div className="flex gap-3">
@@ -113,32 +113,32 @@ export default function SubsidiesMenuPage() {
                         <div className="w-6 h-6 rounded-full bg-blue-100 text-[#6b9ac4] text-xs font-bold flex items-center justify-center">3</div>
                       </div>
                       <div>
-                        <h4 className="text-xs font-bold text-slate-800">Simulación Automática</h4>
-                        <p className="text-[11px] text-slate-400">Calculamos el valor máximo de propiedad y dividendos.</p>
+                        <h4 className="text-xs font-bold text-slate-800">Ahorro Mínimo para Ganar</h4>
+                        <p className="text-[11px] text-slate-400">Ecuación inversa regional para asegurar tu postulación.</p>
                       </div>
                     </div>
                   </div>
                 </div>
                 
                 <Link 
-                  href="/asistente-subsidios?profile=A" 
+                  href="/asistente-subsidios?tab=wizard" 
                   className="w-full text-center py-3.5 px-4 bg-[#6b9ac4] text-white hover:bg-[#5a86ae] font-bold text-sm rounded-xl transition-all shadow-sm"
                 >
-                  Descubrir mi Subsidio Ideal →
+                  Conocer el Mejor Subsidio para Mí →
                 </Link>
               </div>
 
-              {/* Tarjeta Perfil B: Simulación Avanzada */}
+              {/* Tarjeta: Calcula el Valor Máximo de Casa */}
               <div className="bg-white border border-slate-200/80 rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-lg hover:border-[#87c0a3] hover:scale-[1.02] transition-all duration-300 flex flex-col justify-between group">
                 <div>
                   <div className="w-12 h-12 bg-emerald-50 text-[#87c0a3] rounded-xl flex items-center justify-center font-bold text-xl mb-4 group-hover:bg-[#87c0a3] group-hover:text-slate-950 transition-colors duration-300">
-                    📊
+                    🏠
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-2">
-                    Ya tengo un subsidio ganado o compraré sin subsidio
+                    Calcula el Valor Máximo de Casa
                   </h3>
                   <p className="text-xs md:text-sm text-slate-500 leading-relaxed mb-6">
-                    Accede directamente a nuestras herramientas financieras de simulación profunda para planificar tu compra de inmediato.
+                    Determina en segundos el precio máximo de propiedad al que puedes acceder combinando tus ingresos, capacidad de crédito y subsidios habitacionales.
                   </p>
 
                   {/* Filtros rápidos / Accesos directos */}
@@ -177,10 +177,10 @@ export default function SubsidiesMenuPage() {
                 </div>
 
                 <Link 
-                  href="/asistente-subsidios?profile=B" 
+                  href="/asistente-subsidios?tab=valor-maximo" 
                   className="w-full text-center py-3.5 px-4 bg-[#87c0a3] text-slate-950 hover:bg-[#76b092] font-bold text-sm rounded-xl transition-all shadow-sm"
                 >
-                  Simulación Rápida de Presupuesto →
+                  Calcular Valor Máximo de Casa →
                 </Link>
               </div>
             </div>
