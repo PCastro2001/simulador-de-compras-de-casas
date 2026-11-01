@@ -599,10 +599,10 @@ export function evaluateDS49(input: DS49PostulacionInput): DS49CalculationResult
   // ---------------------------------------------------------------------------
   // f) Ahorro Base y Ahorro Adicional Actual
   // ---------------------------------------------------------------------------
-  const puntajeAhorroBase = 10; // Ahorro mínimo obligatorio de 10 UF
+  const puntajeAhorroBase = 0; // El ahorro base mínimo (10 UF) es requisito de entrada; no otorga puntos base por sí mismo
 
-  // Puntaje_Base = Subtotal_ABCD + Bonificación + Puntaje_E_Directo + 10 (ahorro base)
-  const puntajeBase = subtotalABCD + bonificacionEspecial50 + puntajeEDirecto + puntajeAhorroBase;
+  // Puntaje_Base (Puntaje Total) = Subtotal_ABCD + Bonificación 50% + Puntaje_E_Directo
+  const puntajeBase = subtotalABCD + bonificacionEspecial50 + puntajeEDirecto;
 
   const ahorroActualUF = Math.max(0, input.ahorroActualUF ?? 0);
   const extraActualUF = Math.max(0, ahorroActualUF - 10);

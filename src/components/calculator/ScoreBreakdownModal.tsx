@@ -66,7 +66,7 @@ export function ScoreBreakdownModal({ isOpen, onClose, result }: ScoreBreakdownM
               </span>
             </div>
             <div>
-              <span className="text-xs text-slate-500 block">Puntaje Base (10 UF)</span>
+              <span className="text-xs text-slate-500 block">Puntaje Total Base</span>
               <span className="text-lg font-bold text-blue-700">{result.puntajeBase} pts</span>
             </div>
           </div>

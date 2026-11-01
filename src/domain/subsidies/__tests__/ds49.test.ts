@@ -83,31 +83,31 @@ describe('Motor de Cálculo DS49 - Subsimatch', () => {
     expect(result.bonificacionEspecial50).toBe(0);
     expect(result.puntajeEDirecto).toBe(0);
 
-    // Puntaje Base = 630 (ABCD) + 0 + 0 + 10 (ahorro base) = 640 pts
-    expect(result.puntajeAhorroBase).toBe(10);
-    expect(result.puntajeBase).toBe(640);
-    expect(result.puntajeTotalActual).toBe(640);
+    // Puntaje Base = 630 (ABCD) + 0 + 0 = 630 pts (ahorro base no otorga puntos inventados)
+    expect(result.puntajeAhorroBase).toBe(0);
+    expect(result.puntajeBase).toBe(630);
+    expect(result.puntajeTotalActual).toBe(630);
 
     // Corte Metropolitana = 1000 pts
     expect(result.puntajeCorteRegion).toBe(1000);
-    // Déficit = 1000 - 640 = 360 pts
-    expect(result.deficitPuntos).toBe(360);
+    // Déficit = 1000 - 630 = 370 pts
+    expect(result.deficitPuntos).toBe(370);
 
     // Ecuación Inversa:
-    // Ahorro extra = ceil(360 / 2) = 180 UF
-    // Ahorro total sugerido = 10 + 180 = 190 UF
-    expect(result.ahorroExtraRequeridoUF).toBe(180);
-    expect(result.ahorroTotalSugeridoUF).toBe(190);
+    // Ahorro extra = ceil(370 / 2) = 185 UF
+    // Ahorro total sugerido = 10 + 185 = 195 UF
+    expect(result.ahorroExtraRequeridoUF).toBe(185);
+    expect(result.ahorroTotalSugeridoUF).toBe(195);
     expect(result.puntajeProyectadoConAhorroSugerido).toBe(1000);
     expect(result.superaCorte).toBe(false);
 
     // Proyección financiera:
-    // Brecha UF respecto a los 10 UF actuales: 190 - 10 = 180 UF
-    // Brecha CLP = 180 * 38.000 = 6.840.000 CLP
-    // Meses con ahorro disponible de $380.000 CLP/mes = ceil(6.840.000 / 380.000) = 18 meses
-    expect(result.brechaAhorroUF).toBe(180);
-    expect(result.brechaAhorroCLP).toBe(6840000);
-    expect(result.mesesProyectados).toBe(18);
+    // Brecha UF respecto a los 10 UF actuales: 195 - 10 = 185 UF
+    // Brecha CLP = 185 * 38.000 = 7.030.000 CLP
+    // Meses con ahorro disponible de $380.000 CLP/mes = ceil(7.030.000 / 380.000) = 19 meses
+    expect(result.brechaAhorroUF).toBe(185);
+    expect(result.brechaAhorroCLP).toBe(7030000);
+    expect(result.mesesProyectados).toBe(19);
   });
 
   // -------------------------------------------------------------------------
@@ -177,14 +177,14 @@ describe('Motor de Cálculo DS49 - Subsimatch', () => {
     expect(resDiscapacidad.desglose.factorE.discapacidadDirectoPts).toBe(300);
     expect(resDiscapacidad.puntajeEDirecto).toBe(300);
 
-    // Puntaje Base = 400 (ABCD) + 200 (bonif 50%) + 300 (E directo) + 10 (ahorro base) = 910 pts
-    expect(resDiscapacidad.puntajeBase).toBe(910);
+    // Puntaje Base = 400 (ABCD) + 200 (bonif 50%) + 300 (E directo) = 900 pts
+    expect(resDiscapacidad.puntajeBase).toBe(900);
 
-    // Corte Biobío = 980 pts. Déficit = 980 - 910 = 70 pts
+    // Corte Biobío = 980 pts. Déficit = 980 - 900 = 80 pts
     expect(resDiscapacidad.puntajeCorteRegion).toBe(980);
-    expect(resDiscapacidad.deficitPuntos).toBe(70);
-    expect(resDiscapacidad.ahorroExtraRequeridoUF).toBe(35); // ceil(70 / 2) = 35 UF
-    expect(resDiscapacidad.ahorroTotalSugeridoUF).toBe(45); // 10 + 35 = 45 UF
+    expect(resDiscapacidad.deficitPuntos).toBe(80);
+    expect(resDiscapacidad.ahorroExtraRequeridoUF).toBe(40); // ceil(80 / 2) = 40 UF
+    expect(resDiscapacidad.ahorroTotalSugeridoUF).toBe(50); // 10 + 40 = 50 UF
 
     // Caso 3.2: Víctima Valech / Rettig
     const inputValech: DS49PostulacionInput = {
@@ -205,8 +205,8 @@ describe('Motor de Cálculo DS49 - Subsimatch', () => {
     expect(resValech.desglose.factorE.valechRettigDirectoPts).toBe(600);
     expect(resValech.puntajeEDirecto).toBe(600);
 
-    // Puntaje base = 200 + 100 + 600 + 10 = 910 pts
-    expect(resValech.puntajeBase).toBe(910);
+    // Puntaje base = 200 + 100 + 600 = 900 pts
+    expect(resValech.puntajeBase).toBe(900);
     // Corte Araucanía = 890. 910 > 890 => supera corte, déficit 0!
     expect(resValech.superaCorte).toBe(true);
     expect(resValech.deficitPuntos).toBe(0);
@@ -240,8 +240,8 @@ describe('Motor de Cálculo DS49 - Subsimatch', () => {
     expect(result.puntajeCorteRegion).toBe(653);
     // Subtotal ABCD = 390 + 420 + 0 + 50 = 860 pts
     expect(result.subtotalABCD).toBe(860);
-    // Puntaje base = 860 + 0 + 0 + 10 = 870 pts
-    expect(result.puntajeBase).toBe(870);
+    // Puntaje base = 860 + 0 + 0 = 860 pts
+    expect(result.puntajeBase).toBe(860);
     expect(result.puntajeBase).toBeGreaterThan(653);
 
     // Al superar el corte regional:
@@ -383,15 +383,15 @@ describe('Motor de Cálculo DS49 - Subsimatch', () => {
         viviendaPrecaria: true, // 140
         mesesLibretaAhorro: 40, // 40
         saldoMedioCumplePermanencia: true, // 10
-        // ABCD = 670 + 10 = 680 pts base
-        // Déficit = 750 - 680 = 70 pts
-        // Ahorro extra = 35 UF -> Meta = 45 UF
+        // ABCD = 670 pts base
+        // Déficit = 750 - 670 = 80 pts
+        // Ahorro extra = ceil(80 / 2) = 40 UF -> Meta = 10 + 40 = 50 UF
         ahorroActualUF: 50, // Ya posee 50 UF
         valorUF: 38000,
         ingresoDisponibleMensualCLP: 100000,
       });
 
-      expect(result.ahorroTotalSugeridoUF).toBe(45);
+      expect(result.ahorroTotalSugeridoUF).toBe(50);
       expect(result.brechaAhorroUF).toBe(0);
       expect(result.brechaAhorroCLP).toBe(0);
       expect(result.mesesProyectados).toBe(0);

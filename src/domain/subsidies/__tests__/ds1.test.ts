@@ -70,6 +70,36 @@ describe('Motor de Cálculo DS1 y Ecuación Inversa Marginal', () => {
     expect(calculateDS1ExcessPoints(180, 't3')).toBe(196);
   });
 
+  it('2b. Validación de casos del usuario (ej. 22 pts base, corte RM 142.98, déficit 120.98 pts en T3)', () => {
+    // Caso 1: 60 UF de exceso en Tramo 3
+    // 80 base + 60 exceso = 140 UF total -> 60 * 2 = 120 pts
+    expect(calculateDS1ExcessPoints(60, 't3')).toBe(120);
+
+    // Caso 2: 190 UF ahorro total en Tramo 3 (110 UF de exceso)
+    // 60 UF a 2 pts = 120 pts, más (110 - 60) = 50 UF a 1 pt = 50 pts -> Total = 170 pts
+    expect(calculateDS1ExcessPoints(110, 't3')).toBe(170);
+
+    // Caso 3: Postulante con 22 pts base en RM (Corte = 142.98 pts)
+    // Déficit = 142.98 - 22 = 120.98 pts
+    // Primeras 60 UF cubren 120 pts (restan 0.98 pts)
+    // Siguiente tramo a 1 pt/UF cubre 0.98 pts -> 0.98 UF
+    // Exceso necesario = 60 + 0.98 = 60.98 UF
+    const deficitRM = Number((142.98 - 22).toFixed(2));
+    expect(deficitRM).toBe(120.98);
+
+    const excesoRequerido = calculateDS1ExcessUF(deficitRM, 't3');
+    expect(excesoRequerido).toBe(60.98);
+
+    // Ahorro total sugerido = 80 UF base + 60.98 UF exceso = 140.98 UF
+    const ahorroTotalSugerido = Number((80 + excesoRequerido).toFixed(2));
+    expect(ahorroTotalSugerido).toBe(140.98);
+
+    // Verificación de que 60.98 UF de exceso otorga exactamente 120.98 pts
+    const puntosObtenidos = calculateDS1ExcessPoints(excesoRequerido, 't3');
+    expect(puntosObtenidos).toBe(120.98);
+    expect(Number((22 + puntosObtenidos).toFixed(2))).toBe(142.98);
+  });
+
   // -------------------------------------------------------------------------
   // Test 3: Ranking multitramo en recommendationEngine
   // -------------------------------------------------------------------------
