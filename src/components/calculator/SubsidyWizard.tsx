@@ -270,7 +270,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         htmlFor="input-adultos-totales"
                         className="block text-xs font-bold text-slate-700 mb-1"
                       >
-                        Adultos en el hogar (Postulante + otros $\ge$ 18)
+                        Adultos en el hogar (Postulante + otros ≥ 18 años)
                       </label>
                       <input
                         id="input-adultos-totales"
@@ -916,7 +916,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     htmlFor="input-adultos-60"
                     className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1"
                   >
-                    Adultos mayores $\ge$ 60 años
+                    Adultos mayores (60 años o más)
                   </label>
                   <input
                     id="input-adultos-60"
@@ -1144,7 +1144,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500"
                     />
                     <span>
-                      <strong>Constancia de ahorro:</strong> Saldo medio del semestre previo $\ge$ 12.5% del saldo acreditado <strong>(+10 pts en DS49 / permanencia DS1)</strong>
+                      <strong>Constancia de ahorro:</strong> Saldo medio del semestre previo ≥ 12.5% del saldo acreditado <strong>(+10 pts en DS49 / permanencia DS1)</strong>
                     </span>
                   </label>
                 </div>

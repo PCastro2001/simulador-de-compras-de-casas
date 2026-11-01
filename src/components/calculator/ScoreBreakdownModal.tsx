@@ -112,7 +112,7 @@ export function ScoreBreakdownModal({ isOpen, onClose, result }: ScoreBreakdownM
                 </span>
               </li>
               <li className="flex justify-between pt-1">
-                <span>Adultos mayores $\ge$ 60 años (100 pts c/u):</span>
+                <span>Adultos mayores (60 años o más, 100 pts c/u):</span>
                 <span className="font-semibold text-slate-800">
                   +{desglose.factorA.adultosMayoresPts} pts
                 </span>
@@ -257,7 +257,7 @@ export function ScoreBreakdownModal({ isOpen, onClose, result }: ScoreBreakdownM
                 </span>
               </li>
               <li className="flex justify-between pt-1">
-                <span>Constancia de ahorro (saldo medio semestral $\ge$ 12.5%):</span>
+                <span>Constancia de ahorro (saldo medio semestral ≥ 12.5%):</span>
                 <span className="font-semibold text-slate-800">
                   +{desglose.factorD.permanenciaAhorroPts} pts
                 </span>
