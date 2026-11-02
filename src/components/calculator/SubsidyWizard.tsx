@@ -63,7 +63,7 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
 
   const handleSavingsCLPChange = (val: string) => {
     isUserTypingSavingsRef.current = 'clp';
-    const raw = val.replace(/\D/g, '');
+    const raw = val.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
     if (!raw) {
       setSavingsCLPInput('');
       setSavingsUFInput('');
@@ -74,15 +74,22 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
     setSavingsCLPInput(clp.toLocaleString('es-CL'));
     if (ufValue > 0) {
       const uf = Number((clp / ufValue).toFixed(2));
-      setSavingsUFInput(uf > 0 ? uf.toString() : '0');
+      setSavingsUFInput(uf > 0 ? uf.toString() : '');
       updateField('ahorroActualUF', uf);
     }
   };
 
   const handleSavingsUFChange = (val: string) => {
     isUserTypingSavingsRef.current = 'uf';
-    setSavingsUFInput(val);
-    const uf = parseFloat(val);
+    const cleanVal = val.replace(/^0+(?=\d)/, '');
+    if (cleanVal === '') {
+      setSavingsUFInput('');
+      setSavingsCLPInput('');
+      updateField('ahorroActualUF', 0);
+      return;
+    }
+    setSavingsUFInput(cleanVal);
+    const uf = parseFloat(cleanVal);
     if (!isNaN(uf) && uf >= 0) {
       updateField('ahorroActualUF', uf);
       if (ufValue > 0) {
@@ -100,9 +107,29 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
     value: string,
     callback: (num: number) => void
   ) => {
-    const rawValue = value.replace(/\D/g, '');
+    const rawValue = value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
     const num = rawValue ? parseInt(rawValue, 10) : 0;
     callback(num);
+  };
+
+  // Helper para inputs numéricos enteros (evita 03, 020 y permite borrar a vacío que equivale a 0)
+  const handleIntegerInput = (
+    rawVal: string,
+    field: keyof typeof state,
+    min: number = 0,
+    max: number = 999
+  ) => {
+    const sanitized = rawVal.replace(/^0+(?=\d)/, '');
+    if (sanitized === '') {
+      updateField(field as any, 0 as any);
+      return;
+    }
+    const parsed = parseInt(sanitized, 10);
+    if (isNaN(parsed)) {
+      updateField(field as any, 0 as any);
+      return;
+    }
+    updateField(field as any, Math.min(max, Math.max(0, parsed)) as any);
   };
 
   const personasHogar = Math.max(
@@ -280,10 +307,14 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min="1"
                         max="12"
-                        value={state.adultosTotales}
+                        placeholder="1"
+                        value={state.adultosTotales === 0 ? '' : state.adultosTotales}
                         onChange={(e) =>
-                          updateField('adultosTotales', Math.max(1, parseInt(e.target.value, 10) || 1))
+                          handleIntegerInput(e.target.value, 'adultosTotales', 1, 12)
                         }
+                        onBlur={() => {
+                          if (state.adultosTotales < 1) updateField('adultosTotales', 1);
+                        }}
                         className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                       <span className="text-[10px] text-slate-500 mt-0.5 block">
@@ -303,9 +334,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min="0"
                         max="10"
-                        value={state.menoresDe18}
+                        placeholder="0"
+                        value={state.menoresDe18 === 0 ? '' : state.menoresDe18}
                         onChange={(e) =>
-                          updateField('menoresDe18', Math.max(0, parseInt(e.target.value, 10) || 0))
+                          handleIntegerInput(e.target.value, 'menoresDe18', 0, 10)
                         }
                         className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
@@ -326,9 +358,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min="0"
                         max="5"
-                        value={state.miembrosDiscapacidad}
+                        placeholder="0"
+                        value={state.miembrosDiscapacidad === 0 ? '' : state.miembrosDiscapacidad}
                         onChange={(e) =>
-                          updateField('miembrosDiscapacidad', Math.max(0, parseInt(e.target.value, 10) || 0))
+                          handleIntegerInput(e.target.value, 'miembrosDiscapacidad', 0, 5)
                         }
                         className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
@@ -452,10 +485,14 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min="1"
                         max="10"
-                        value={state.dormitorios}
+                        placeholder="1"
+                        value={state.dormitorios === 0 ? '' : state.dormitorios}
                         onChange={(e) =>
-                          updateField('dormitorios', Math.max(1, parseInt(e.target.value, 10) || 1))
+                          handleIntegerInput(e.target.value, 'dormitorios', 1, 10)
                         }
+                        onBlur={() => {
+                          if (state.dormitorios < 1) updateField('dormitorios', 1);
+                        }}
                         className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                       />
                       <span className="text-[10px] text-slate-500 mt-0.5 block">
@@ -475,11 +512,23 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min={personasHogar}
                         max="25"
+                        placeholder={personasHogar.toString()}
                         disabled={state.tipoTenencia === 'ARRENDATARIO'}
-                        value={state.tipoTenencia === 'ARRENDATARIO' ? personasHogar : state.totalPersonasVivienda}
-                        onChange={(e) =>
-                          updateField('totalPersonasVivienda', Math.max(personasHogar, parseInt(e.target.value, 10) || personasHogar))
+                        value={
+                          state.tipoTenencia === 'ARRENDATARIO'
+                            ? personasHogar
+                            : state.totalPersonasVivienda === 0
+                            ? ''
+                            : state.totalPersonasVivienda
                         }
+                        onChange={(e) =>
+                          handleIntegerInput(e.target.value, 'totalPersonasVivienda', personasHogar, 25)
+                        }
+                        onBlur={() => {
+                          if (state.totalPersonasVivienda < personasHogar) {
+                            updateField('totalPersonasVivienda', personasHogar);
+                          }
+                        }}
                         className={`w-full border rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                           state.tipoTenencia === 'ARRENDATARIO'
                             ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
@@ -845,10 +894,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="15"
+                    placeholder="0"
                     disabled={isSingleApplicant}
-                    value={isSingleApplicant ? 0 : state.integrantesDeclarados}
+                    value={isSingleApplicant || state.integrantesDeclarados === 0 ? '' : state.integrantesDeclarados}
                     onChange={(e) =>
-                      updateField('integrantesDeclarados', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'integrantesDeclarados', 0, 15)
                     }
                     className={`w-full border rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                       isSingleApplicant
@@ -874,10 +924,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="10"
+                    placeholder="0"
                     disabled={isSingleApplicant}
-                    value={isSingleApplicant ? 0 : state.menoresHasta5}
+                    value={isSingleApplicant || state.menoresHasta5 === 0 ? '' : state.menoresHasta5}
                     onChange={(e) =>
-                      updateField('menoresHasta5', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'menoresHasta5', 0, 10)
                     }
                     className={`w-full border rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                       isSingleApplicant
@@ -903,10 +954,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="10"
+                    placeholder="0"
                     disabled={isSingleApplicant}
-                    value={isSingleApplicant ? 0 : state.menores6a18}
+                    value={isSingleApplicant || state.menores6a18 === 0 ? '' : state.menores6a18}
                     onChange={(e) =>
-                      updateField('menores6a18', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'menores6a18', 0, 10)
                     }
                     className={`w-full border rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                       isSingleApplicant
@@ -932,10 +984,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="5"
+                    placeholder="0"
                     disabled={isSingleApplicant}
-                    value={isSingleApplicant ? 0 : state.adultosMayores60}
+                    value={isSingleApplicant || state.adultosMayores60 === 0 ? '' : state.adultosMayores60}
                     onChange={(e) =>
-                      updateField('adultosMayores60', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'adultosMayores60', 0, 5)
                     }
                     className={`w-full border rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                       isSingleApplicant
@@ -1087,9 +1140,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="120"
-                    value={state.mesesLibretaAhorro}
+                    placeholder="0"
+                    value={state.mesesLibretaAhorro === 0 ? '' : state.mesesLibretaAhorro}
                     onChange={(e) =>
-                      updateField('mesesLibretaAhorro', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'mesesLibretaAhorro', 0, 120)
                     }
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
@@ -1110,9 +1164,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="6"
-                    value={state.postulacionesPreviasIndividuales}
+                    placeholder="0"
+                    value={state.postulacionesPreviasIndividuales === 0 ? '' : state.postulacionesPreviasIndividuales}
                     onChange={(e) =>
-                      updateField('postulacionesPreviasIndividuales', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'postulacionesPreviasIndividuales', 0, 6)
                     }
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
@@ -1133,9 +1188,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                     type="number"
                     min="0"
                     max="60"
-                    value={state.mesesArriendoAlDia}
+                    placeholder="0"
+                    value={state.mesesArriendoAlDia === 0 ? '' : state.mesesArriendoAlDia}
                     onChange={(e) =>
-                      updateField('mesesArriendoAlDia', Math.max(0, parseInt(e.target.value, 10) || 0))
+                      handleIntegerInput(e.target.value, 'mesesArriendoAlDia', 0, 60)
                     }
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
@@ -1166,8 +1222,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                         type="number"
                         min={0}
                         max={4}
-                        value={state.semestresConstanciaAhorro}
-                        onChange={(e) => updateField('semestresConstanciaAhorro', Math.max(0, Math.min(4, parseInt(e.target.value, 10) || 0)))}
+                        placeholder="0"
+                        value={state.semestresConstanciaAhorro === 0 ? '' : state.semestresConstanciaAhorro}
+                        onChange={(e) =>
+                          handleIntegerInput(e.target.value, 'semestresConstanciaAhorro', 0, 4)
+                        }
                         className="w-16 text-xs font-semibold px-2 py-1 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                       />
                     </div>
@@ -1194,9 +1253,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       type="number"
                       min="0"
                       max="3"
-                      value={state.bomberosActivos}
+                      placeholder="0"
+                      value={state.bomberosActivos === 0 ? '' : state.bomberosActivos}
                       onChange={(e) =>
-                        updateField('bomberosActivos', Math.max(0, parseInt(e.target.value, 10) || 0))
+                        handleIntegerInput(e.target.value, 'bomberosActivos', 0, 3)
                       }
                       className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
@@ -1214,10 +1274,11 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       type="number"
                       min="0"
                       max="3"
+                      placeholder="0"
                       disabled={state.perteneceGendarmeria}
-                      value={state.servicioMilitar}
+                      value={state.perteneceGendarmeria || state.servicioMilitar === 0 ? '' : state.servicioMilitar}
                       onChange={(e) =>
-                        updateField('servicioMilitar', Math.max(0, parseInt(e.target.value, 10) || 0))
+                        handleIntegerInput(e.target.value, 'servicioMilitar', 0, 3)
                       }
                       className={`w-full border rounded-xl px-4 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-teal-500 ${
                         state.perteneceGendarmeria
@@ -1268,9 +1329,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       type="number"
                       min="0"
                       max="3"
-                      value={state.miembrosDiscapacidad}
+                      placeholder="0"
+                      value={state.miembrosDiscapacidad === 0 ? '' : state.miembrosDiscapacidad}
                       onChange={(e) =>
-                        updateField('miembrosDiscapacidad', Math.max(0, parseInt(e.target.value, 10) || 0))
+                        handleIntegerInput(e.target.value, 'miembrosDiscapacidad', 0, 3)
                       }
                       className="w-full bg-white border border-slate-300 rounded-xl px-4 py-2 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
