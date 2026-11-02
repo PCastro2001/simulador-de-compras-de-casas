@@ -94,6 +94,7 @@ export interface UseDS49CalculatorState {
   // Factor D: Libreta de Ahorro y Arriendo
   mesesLibretaAhorro: number;
   saldoMedioCumplePermanencia: boolean;
+  semestresConstanciaAhorro: number;
   mesesArriendoAlDia: number;
 
   // Factor E: Condiciones Especiales
@@ -138,6 +139,7 @@ const DEFAULT_STATE: UseDS49CalculatorState = {
 
   mesesLibretaAhorro: 18,
   saldoMedioCumplePermanencia: true,
+  semestresConstanciaAhorro: 0,
   mesesArriendoAlDia: 0,
 
   miembrosDiscapacidad: 0,
@@ -479,6 +481,7 @@ export function useDS49Calculator(initialState?: Partial<UseDS49CalculatorState>
       postulacionesPrevias: state.postulacionesPreviasIndividuales,
       mesesLibretaAhorro: state.mesesLibretaAhorro,
       saldoMedioCumplePermanencia: state.saldoMedioCumplePermanencia,
+      semestresConstanciaAhorro: state.semestresConstanciaAhorro,
       mesesArriendoAlDia: state.mesesArriendoAlDia,
       miembrosDiscapacidad: state.miembrosDiscapacidad,
       victimaValechRettig: state.victimaValechRettig,

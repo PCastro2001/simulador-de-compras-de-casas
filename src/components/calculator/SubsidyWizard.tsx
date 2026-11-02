@@ -10,7 +10,7 @@ import {
   DS49_REGION_LABELS,
   SavingsRatePreset,
 } from '@/domain/subsidies/ds49';
-import { SubsidyOptionKey } from '@/domain/subsidies/recommendationEngine';
+import { SubsidyOptionKey, EvaluatedSubsidyOption } from '@/domain/subsidies/recommendationEngine';
 import { TipoTenencia } from '@/domain/rsh/calculator';
 import { formatCLP } from '@/utils/format';
 
@@ -21,6 +21,7 @@ export interface SubsidyWizardProps {
 export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardProps = {}) {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
+  const [selectedAuditOption, setSelectedAuditOption] = useState<EvaluatedSubsidyOption | null>(null);
 
   const {
     state,
@@ -1155,6 +1156,22 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
                       <strong>Constancia de ahorro:</strong> Saldo medio del semestre previo ≥ 12.5% del saldo acreditado <strong>(+10 pts en DS49 / permanencia DS1)</strong>
                     </span>
                   </label>
+                  {state.saldoMedioCumplePermanencia && (
+                    <div className="mt-2 pl-6 flex items-center gap-2">
+                      <label htmlFor="input-semestres-constancia" className="text-xs text-slate-600 font-medium">
+                        Semestres con constancia continua (DS1: 25 pts c/u, máx 4 / 100 pts):
+                      </label>
+                      <input
+                        id="input-semestres-constancia"
+                        type="number"
+                        min={0}
+                        max={4}
+                        value={state.semestresConstanciaAhorro}
+                        onChange={(e) => updateField('semestresConstanciaAhorro', Math.max(0, Math.min(4, parseInt(e.target.value, 10) || 0)))}
+                        className="w-16 text-xs font-semibold px-2 py-1 border border-slate-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1325,7 +1342,10 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
         <SubsidyComparisonMatrix
           recommendation={comparisonResult}
           ufValue={ufValue}
-          onOpenAuditModal={() => setIsAuditModalOpen(true)}
+          onOpenAuditModal={(opt) => {
+            setSelectedAuditOption(opt || null);
+            setIsAuditModalOpen(true);
+          }}
           onNavigateToPurchaseCapacity={onNavigateToPurchaseCapacity}
         />
       </div>
@@ -1335,6 +1355,8 @@ export function SubsidyWizard({ onNavigateToPurchaseCapacity }: SubsidyWizardPro
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
         result={calculationResult}
+        option={selectedAuditOption}
+        ufValue={ufValue}
       />
     </div>
   );

@@ -255,7 +255,9 @@ export function recommendBestSubsidy(profile: UserSubsidyProfile): Recommendatio
     dormitorios: profile.dormitorios,
     indiceHacinamientoDirecto: profile.indiceHacinamientoDirecto,
     semestresConstanciaAhorro:
-      profile.semestresConstanciaAhorro ?? (profile.saldoMedioCumplePermanencia ? 2 : 0),
+      typeof profile.semestresConstanciaAhorro === 'number'
+        ? profile.semestresConstanciaAhorro
+        : 0,
     postulacionesPrevias: profile.postulacionesPrevias,
     mesesArriendoAlDia: profile.mesesArriendoAlDia,
     ahorroActualUF,

@@ -14,7 +14,7 @@ interface SubsidyComparisonMatrixProps {
   ufValue: number;
   onSelectOption?: (key: SubsidyOptionKey) => void;
   selectedKey?: SubsidyOptionKey;
-  onOpenAuditModal?: () => void;
+  onOpenAuditModal?: (option: EvaluatedSubsidyOption) => void;
   onNavigateToPurchaseCapacity?: (key: SubsidyOptionKey) => void;
 }
 
@@ -255,7 +255,7 @@ export function SubsidyComparisonMatrix({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onSelectOption) onSelectOption(option.key);
-                      if (onOpenAuditModal) onOpenAuditModal();
+                      if (onOpenAuditModal) onOpenAuditModal(option);
                     }}
                     className="w-full py-2 px-3 rounded-xl text-xs font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all text-center flex items-center justify-center gap-1.5 shadow-2xs hover:border-slate-400"
                   >
